@@ -1,0 +1,101 @@
+# ============================================
+# LEAA - Project Configuration
+# ============================================
+
+project:
+  name: "LEAA"
+  version: "0.1.0"
+  description: "Language Embedded Agent Actions - Archery Agent"
+
+device:
+  primary: "mps"        # Apple Silicon GPU
+  fallback: "cpu"
+
+# Phase 1: RL Archery Policy
+rl_training:
+  algorithm: "PPO"
+  framework: "stable-baselines3"
+  
+  environment:
+    type: "custom"       # PyBullet first, Unity later
+    max_episode_steps: 500
+    
+  observation_space:
+    - agent_position       # vec3
+    - agent_rotation       # vec3
+    - target_position      # vec3
+    - target_velocity      # vec3
+    - wind_vector          # vec3
+    - arrow_type           # int (one-hot)
+    - draw_strength        # float
+    
+  action_space:
+    - aim_pitch            # continuous [-90, 90]
+    - aim_yaw              # continuous [-180, 180]
+    - draw_strength        # continuous [0, 1]
+    - release              # discrete [0, 1]
+    
+  reward:
+    hit_bullseye: 100.0
+    hit_target: 50.0
+    miss: -1.0
+    time_penalty: -0.01
+    
+  curriculum:
+    stages:
+      - name: "static_close"
+        target_distance: [5, 15]
+        target_moving: false
+        wind: false
+        
+      - name: "static_far"
+        target_distance: [15, 50]
+        target_moving: false
+        wind: false
+        
+      - name: "moving_target"
+        target_distance: [10, 40]
+        target_moving: true
+        target_speed: [1, 5]
+        wind: false
+        
+      - name: "wind"
+        target_distance: [10, 50]
+        target_moving: true
+        target_speed: [1, 8]
+        wind: true
+        wind_speed: [0, 10]
+        
+      - name: "agent_moving"
+        target_distance: [10, 50]
+        target_moving: true
+        agent_moving: true
+        wind: true
+
+  training:
+    total_timesteps: 2_000_000
+    batch_size: 256
+    learning_rate: 0.0003
+    n_steps: 2048
+    gamma: 0.99
+    checkpoint_freq: 50000
+
+# Phase 2: Language Grounding
+language_layer:
+  model: "claude-sonnet-4-5-20250929"  # API calls
+  local_model: "phi3:mini"              # Ollama local fallback
+  
+  scene_registry:
+    attributes:
+      - id
+      - color
+      - flag_color
+      - position
+      - velocity
+      - size
+      - type
+
+# Unity (Phase 1.5 - after PyBullet prototype)
+unity:
+  version: "2022.3 LTS"
+  ml_agents_version: "Release 21"

@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ML / Training artifacts
+rl_training/checkpoints/
+rl_training/logs/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+
+# TensorBoard
+runs/
+tb_logs/
+
+# Unity
+unity_project/Library/
+unity_project/Temp/
+unity_project/Obj/
+unity_project/Build/
+unity_project/Builds/
+unity_project/Logs/
+unity_project/UserSettings/
+unity_project/*.csproj
+unity_project/*.unityproj
+unity_project/*.sln
+unity_project/*.suo
+unity_project/*.tmp
+unity_project/*.user
+unity_project/*.userprefs
+unity_project/*.pidb
+unity_project/*.booproj
+unity_project/*.svd
+unity_project/*.pdb
+unity_project/*.mdb
+unity_project/*.opendb
+unity_project/*.VC.db
+
+# Data
+shared/data/
+*.csv
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Misc
+*.bak
+*.tmp

@@ -1,0 +1,2 @@
+1. No need to train with Unreal Engine, we can train with NumPySim.
+2. And attaching the training to 3D environment is.
