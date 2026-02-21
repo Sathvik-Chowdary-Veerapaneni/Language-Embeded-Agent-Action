@@ -2,12 +2,13 @@
 LEAA RL Training — Main Training Script
 
 Runs PPO through curriculum stages with Stable-Baselines3.
+Supports vectorized environments (SubprocVecEnv) for parallel rollout collection.
 Default device: CPU (MPS available via --device mps but slower for MlpPolicy).
 
 Usage:
-    python rl_training/train.py
-    python rl_training/train.py --device cpu --stage 0
-    python rl_training/train.py --resume rl_training/checkpoints/static_close_best.zip
+    python rl_training/train.py --device cpu --num-envs 8
+    python rl_training/train.py --device cpu --num-envs 8 --timesteps 200000
+    python rl_training/train.py --resume rl_training/checkpoints/static_close_best.zip --num-envs 8
 """
 
 import argparse
@@ -20,13 +21,13 @@ from pathlib import Path
 import numpy as np
 import yaml
 import torch
-from tqdm import tqdm
 from rich.console import Console
-from rich.table import Table
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import configure
+from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
+from stable_baselines3.common.utils import set_random_seed
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -62,6 +63,31 @@ def get_device(requested: str = "cpu") -> str:
     return "cpu"
 
 
+def make_env(rank: int, seed: int, stage_config: dict):
+    """Factory function that returns a callable to create an ArcheryEnv.
+
+    Required for SubprocVecEnv — each subprocess needs its own env instance.
+    """
+    def _init():
+        env = ArcheryEnv(stage_config=stage_config)
+        env.reset(seed=seed + rank)
+        return env
+    set_random_seed(seed + rank)
+    return _init
+
+
+def create_vec_env(num_envs: int, stage_config: dict, seed: int = 42):
+    """Create a vectorized environment."""
+    if num_envs > 1:
+        env = SubprocVecEnv(
+            [make_env(i, seed, stage_config) for i in range(num_envs)],
+            start_method="fork",
+        )
+    else:
+        env = DummyVecEnv([make_env(0, seed, stage_config)])
+    return env
+
+
 # ---------- Custom Callback ----------
 class CurriculumCallback(BaseCallback):
     """Tracks success rate and manages curriculum progression."""
@@ -71,6 +97,7 @@ class CurriculumCallback(BaseCallback):
         stages: list,
         current_stage: int,
         checkpoint_dir: Path,
+        num_envs: int = 1,
         window_size: int = 1000,
         checkpoint_freq: int = 50000,
         verbose: int = 1,
@@ -79,6 +106,7 @@ class CurriculumCallback(BaseCallback):
         self.stages = stages
         self.current_stage = current_stage
         self.checkpoint_dir = checkpoint_dir
+        self.num_envs = num_envs
         self.window_size = window_size
         self.checkpoint_freq = checkpoint_freq
 
@@ -99,7 +127,7 @@ class CurriculumCallback(BaseCallback):
         return sum(self.hit_history) / len(self.hit_history)
 
     def _on_step(self) -> bool:
-        # Check infos for episode completion
+        # Check infos for episode completion (vectorized: multiple infos per step)
         infos = self.locals.get("infos", [])
         for info in infos:
             if "hit" in info:
@@ -113,6 +141,7 @@ class CurriculumCallback(BaseCallback):
             self.logger.record("curriculum/stage_name", self.current_stage_config["name"])
             self.logger.record("curriculum/success_rate", self.success_rate)
             self.logger.record("curriculum/episodes", self.episode_count)
+            self.logger.record("curriculum/envs", self.num_envs)
 
         # Checkpoint
         if self.num_timesteps - self.last_checkpoint_step >= self.checkpoint_freq:
@@ -164,8 +193,9 @@ class CurriculumCallback(BaseCallback):
         self.best_success_rate = 0.0
         self.stage_episode_count = 0
 
-        # Update environment config
-        self.training_env.env_method("_update_config", new_cfg)
+        # Recreate vectorized env with new stage config
+        new_env = create_vec_env(self.num_envs, new_cfg)
+        self.model.set_env(new_env)
 
 
 # ---------- Training Function ----------
@@ -174,9 +204,10 @@ def train(
     start_stage: int = 0,
     resume_path: str = None,
     total_timesteps: int = 2_000_000,
+    num_envs: int = 8,
     quick_test: bool = False,
 ):
-    """Main training loop with curriculum progression."""
+    """Main training loop with curriculum progression and vectorized envs."""
 
     # Load curriculum
     stages = load_curriculum()
@@ -184,15 +215,17 @@ def train(
 
     console.print(f"\n[bold cyan]═══ LEAA Training ═══[/bold cyan]")
     console.print(f"  Device: {device}")
+    console.print(f"  Parallel envs: {num_envs}")
     console.print(f"  Starting stage: {start_stage} ({stage_config['name']})")
     console.print(f"  Total timesteps: {total_timesteps:,}")
+    console.print(f"  Batch size: n_steps({2048}) × envs({num_envs}) = {2048 * num_envs:,} per update")
 
     # Dirs
     CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Create environment
-    env = ArcheryEnv(stage_config=stage_config)
+    # Create vectorized environment
+    env = create_vec_env(num_envs, stage_config)
 
     # Create or load model
     if resume_path:
@@ -226,13 +259,14 @@ def train(
 
     # Quick test mode
     if quick_test:
-        total_timesteps = 2048  # Minimum for one PPO update
+        total_timesteps = 2048 * num_envs
 
     # Callback
     callback = CurriculumCallback(
         stages=stages,
         current_stage=start_stage,
         checkpoint_dir=CHECKPOINTS_DIR,
+        num_envs=num_envs,
         checkpoint_freq=50000 if not quick_test else 1024,
     )
 
@@ -256,6 +290,9 @@ def train(
     final_path = CHECKPOINTS_DIR / f"final_stage{callback.current_stage}.zip"
     model.save(str(final_path))
 
+    # Cleanup vectorized env
+    env.close()
+
     # Summary
     console.print(f"\n[bold cyan]═══ Training Summary ═══[/bold cyan]")
     console.print(f"  Time: {elapsed:.0f}s ({elapsed/60:.1f}min)")
@@ -278,6 +315,8 @@ def main():
                         help="Path to checkpoint to resume from")
     parser.add_argument("--timesteps", type=int, default=2_000_000,
                         help="Total training timesteps")
+    parser.add_argument("--num-envs", type=int, default=8,
+                        help="Number of parallel environments (default: 8)")
     parser.add_argument("--quick-test", action="store_true",
                         help="Quick test mode (minimal training)")
     args = parser.parse_args()
@@ -288,6 +327,7 @@ def main():
         start_stage=args.stage,
         resume_path=args.resume,
         total_timesteps=args.timesteps,
+        num_envs=args.num_envs,
         quick_test=args.quick_test,
     )
 
