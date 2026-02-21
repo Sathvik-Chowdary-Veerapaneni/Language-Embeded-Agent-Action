@@ -1,0 +1,16 @@
+# LEAA — Python Dependencies
+# Generated from .venv on macOS (Python 3.10, PyTorch 2.10)
+# For Linux CPU-only: use linux_setup_and_train.sh instead
+
+torch==2.10.0
+torchvision
+torchaudio
+numpy==2.2.6
+scipy==1.15.3
+matplotlib==3.10.8
+gymnasium==1.2.3
+stable-baselines3[extra]==2.7.1
+PyYAML==6.0.3
+tensorboard==2.20.0
+tqdm==4.67.3
+rich==14.3.3

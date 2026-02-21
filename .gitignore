@@ -82,3 +82,5 @@ shared/data/
 # Misc
 *.bak
 *.tmp
+*.meta
+training_output.log
