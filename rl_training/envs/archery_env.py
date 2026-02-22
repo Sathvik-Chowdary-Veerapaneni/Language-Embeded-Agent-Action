@@ -258,27 +258,48 @@ class ArcheryEnv(gym.Env):
             arrow_type=self.arrow_type,
         )
 
-        # Simulate trajectory
+        # Simulate trajectory (with seeded RNG for deterministic wind gusts)
         trajectory = simulate_trajectory(
             origin=self.agent_position.copy(),
             velocity_vector=velocity,
             arrow_type=self.arrow_type,
             wind=self.wind,
+            rng=self.np_random,
         )
         self.last_trajectory = trajectory
 
-        # Check hit
-        hit, hit_pos, dist_from_center = check_hit(trajectory, self.target)
+        # Compute flight time from trajectory length
+        flight_time = (len(trajectory) - 1) * 0.005  # dt=0.005 default
+
+        # Move target to predicted position at impact time (for moving targets)
+        if self.config["target_moving"] and flight_time > 0:
+            predicted_target_pos = (
+                self.target.position + self.target.velocity * flight_time
+            )
+        else:
+            predicted_target_pos = self.target.position.copy()
+
+        # Create a temporary target at predicted position for hit detection
+        predicted_target = Target(
+            id=self.target.id,
+            position=predicted_target_pos,
+            radius=self.target.radius,
+            velocity=self.target.velocity,
+            flag_color=self.target.flag_color,
+        )
+
+        # Check hit against predicted target position
+        hit, hit_pos, dist_from_center = check_hit(trajectory, predicted_target)
 
         # Find closest approach for reward shaping
         closest_dist = min(
-            np.linalg.norm(p - self.target.position)
+            np.linalg.norm(p - predicted_target_pos)
             for p, _ in trajectory
         )
 
         # Compute reward (continuous gradient signal via closest_approach)
         reward = compute_reward(
-            hit, dist_from_center, self.target.radius,
+            hit, dist_from_center, predicted_target.radius,
             closest_approach=closest_dist,
         )
 
