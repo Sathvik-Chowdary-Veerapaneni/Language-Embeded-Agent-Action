@@ -1,12 +1,14 @@
 """
 LEAA RL Training — Evaluation Script
 
-Evaluate a trained model across curriculum stages with stats and 3D trajectory visualization.
+Evaluate a trained model across curriculum stages with VecNormalize stats,
+performance metrics, and 3D trajectory visualization.
 
 Usage:
-    python rl_training/evaluate.py --model rl_training/checkpoints/static_close_best.zip
-    python rl_training/evaluate.py --model rl_training/checkpoints/final_stage0.zip --episodes 100 --visualize
-    python rl_training/evaluate.py --random --episodes 50  # Evaluate random policy (baseline)
+    python rl_training/evaluate.py --model rl_training/checkpoints/final_stage3.zip
+    python rl_training/evaluate.py --model rl_training/checkpoints/final_stage3.zip --episodes 200 --visualize
+    python rl_training/evaluate.py --random --episodes 50  # Random baseline
+    python rl_training/evaluate.py --model rl_training/checkpoints/final_stage3.zip --vecnorm rl_training/checkpoints/vecnormalize_final_stage3.pkl
 """
 
 import argparse
@@ -24,6 +26,8 @@ from rich.console import Console
 from rich.table import Table
 
 from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3.common.monitor import Monitor
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -32,6 +36,7 @@ from rl_training.envs.archery_env import ArcheryEnv
 console = Console()
 
 CONFIGS_DIR = Path(__file__).resolve().parent / "configs"
+CHECKPOINTS_DIR = Path(__file__).resolve().parent / "checkpoints"
 LOGS_DIR = Path(__file__).resolve().parent / "logs"
 PLOTS_DIR = LOGS_DIR / "eval_plots"
 
@@ -42,13 +47,54 @@ def load_curriculum() -> list:
         return yaml.safe_load(f)["stages"]
 
 
+def find_vecnorm_stats(model_path: str, vecnorm_path: str = None) -> str:
+    """Auto-detect the best VecNormalize stats file for a given model.
+
+    Search order:
+        1. Explicit --vecnorm path
+        2. Same basename: vecnormalize_{model_basename}.pkl
+        3. Final stage stats: vecnormalize_final_stage*.pkl
+        4. Best checkpoint for each known stage
+    """
+    if vecnorm_path and os.path.exists(vecnorm_path):
+        return vecnorm_path
+
+    model_dir = Path(model_path).parent
+    model_stem = Path(model_path).stem  # e.g. "final_stage3"
+
+    candidates = [
+        # Match model name directly
+        model_dir / f"vecnormalize_{model_stem}.pkl",
+        # Common final patterns
+        CHECKPOINTS_DIR / f"vecnormalize_{model_stem}.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_stage3.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_stage2.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_stage1.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_stage0.pkl",
+        # Best checkpoints per stage
+        CHECKPOINTS_DIR / "vecnormalize_static_far_best.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_static_medium_best.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_static_close_best.pkl",
+    ]
+
+    for path in candidates:
+        if path.exists():
+            return str(path)
+
+    return None
+
+
 def evaluate_stage(
     model,
     stage_config: dict,
     n_episodes: int = 100,
     use_random: bool = False,
+    vec_normalize: VecNormalize = None,
 ) -> dict:
     """Evaluate model on a specific curriculum stage.
+
+    If vec_normalize is provided, observations are normalized through it
+    before being passed to the model — matching training conditions.
 
     Returns dict with: hit_rate, avg_reward, avg_dist_from_center, trajectories.
     """
@@ -58,6 +104,12 @@ def evaluate_stage(
     total_reward = 0.0
     distances = []
     trajectories = []
+    rewards_list = []
+
+    # Stats tracking
+    bullseyes = 0
+    inner_hits = 0
+    outer_hits = 0
 
     for i in range(n_episodes):
         obs, info = env.reset(seed=i)
@@ -65,15 +117,31 @@ def evaluate_stage(
         if use_random:
             action = env.action_space.sample()
         else:
-            action, _ = model.predict(obs, deterministic=True)
+            # Normalize observation if VecNormalize is available
+            if vec_normalize is not None:
+                obs_normalized = vec_normalize.normalize_obs(obs)
+            else:
+                obs_normalized = obs
+            action, _ = model.predict(obs_normalized, deterministic=True)
 
         obs2, reward, terminated, truncated, info = env.step(action)
 
         total_reward += reward
+        rewards_list.append(reward)
+
         if info["hit"]:
             hits += 1
             if info["distance_from_center"] is not None:
-                distances.append(info["distance_from_center"])
+                d = info["distance_from_center"]
+                distances.append(d)
+                # Classify hit zone
+                r = env.target.radius
+                if d <= r * 0.1:
+                    bullseyes += 1
+                elif d <= r * 0.5:
+                    inner_hits += 1
+                else:
+                    outer_hits += 1
 
         # Save a few trajectories for visualization
         if i < 10 and env.last_trajectory:
@@ -85,12 +153,20 @@ def evaluate_stage(
                 "wind": env.wind.get_wind_vector().copy(),
             })
 
+    env.close()
+
     return {
         "hit_rate": hits / n_episodes,
         "avg_reward": total_reward / n_episodes,
         "avg_dist_from_center": np.mean(distances) if distances else float("nan"),
+        "min_dist_from_center": np.min(distances) if distances else float("nan"),
+        "max_dist_from_center": np.max(distances) if distances else float("nan"),
         "hits": hits,
         "total": n_episodes,
+        "bullseyes": bullseyes,
+        "inner_hits": inner_hits,
+        "outer_hits": outer_hits,
+        "reward_std": np.std(rewards_list),
         "trajectories": trajectories,
     }
 
@@ -174,23 +250,40 @@ def visualize_trajectories(
 
 def evaluate(
     model_path: str = None,
+    vecnorm_path: str = None,
     n_episodes: int = 100,
     stage_name: str = "all",
     visualize: bool = False,
     use_random: bool = False,
 ):
-    """Main evaluation function."""
+    """Main evaluation function with VecNormalize support."""
 
     console.print(f"\n[bold cyan]═══ LEAA Evaluation ═══[/bold cyan]")
 
     # Load model
     model = None
+    vec_normalize = None
+
     if not use_random:
         if model_path is None:
             console.print("[red]Error: --model required (or use --random)[/red]")
             return
         console.print(f"  Model: {model_path}")
         model = PPO.load(model_path)
+
+        # Load VecNormalize stats — critical for correct evaluation
+        vn_path = find_vecnorm_stats(model_path, vecnorm_path)
+        if vn_path:
+            # Create a dummy vec env just to load VecNormalize stats
+            dummy_env = DummyVecEnv([lambda: Monitor(ArcheryEnv())])
+            vec_normalize = VecNormalize.load(vn_path, dummy_env)
+            vec_normalize.training = False  # Don't update stats during eval
+            vec_normalize.norm_reward = False  # Don't normalize rewards
+            console.print(f"  VecNormalize: [green]Loaded from {os.path.basename(vn_path)}[/green]")
+            console.print(f"    obs_rms mean range: [{vec_normalize.obs_rms.mean.min():.2f}, {vec_normalize.obs_rms.mean.max():.2f}]")
+            console.print(f"    obs_rms var range:  [{vec_normalize.obs_rms.var.min():.4f}, {vec_normalize.obs_rms.var.max():.4f}]")
+        else:
+            console.print("  VecNormalize: [yellow]⚠ No stats found — using raw observations (results may be inaccurate)[/yellow]")
     else:
         console.print("  Using random policy (baseline)")
 
@@ -212,7 +305,10 @@ def evaluate(
     table.add_column("Stage", style="cyan")
     table.add_column("Hit Rate", justify="right")
     table.add_column("Avg Reward", justify="right")
-    table.add_column("Avg Dist from Center", justify="right")
+    table.add_column("Bullseye", justify="right", style="green")
+    table.add_column("Inner", justify="right", style="yellow")
+    table.add_column("Outer", justify="right", style="red")
+    table.add_column("Avg Dist", justify="right")
     table.add_column("Hits / Total", justify="right")
 
     all_results = {}
@@ -224,6 +320,7 @@ def evaluate(
             stage_config=stage,
             n_episodes=n_episodes,
             use_random=use_random,
+            vec_normalize=vec_normalize,
         )
         all_results[stage["name"]] = results
 
@@ -231,6 +328,9 @@ def evaluate(
             stage["name"],
             f"{results['hit_rate']:.1%}",
             f"{results['avg_reward']:.1f}",
+            f"{results['bullseyes']}",
+            f"{results['inner_hits']}",
+            f"{results['outer_hits']}",
             f"{results['avg_dist_from_center']:.3f}" if not np.isnan(results["avg_dist_from_center"]) else "N/A",
             f"{results['hits']}/{results['total']}",
         )
@@ -245,6 +345,17 @@ def evaluate(
     console.print(table)
     console.print()
 
+    # Overall summary
+    total_hits = sum(r["hits"] for r in all_results.values())
+    total_eps = sum(r["total"] for r in all_results.values())
+    total_bullseyes = sum(r["bullseyes"] for r in all_results.values())
+    console.print(f"  Overall: {total_hits}/{total_eps} hits ({total_hits/total_eps:.1%})")
+    console.print(f"  Bullseyes: {total_bullseyes}")
+
+    # Cleanup dummy env
+    if vec_normalize is not None:
+        vec_normalize.close()
+
     return all_results
 
 
@@ -253,6 +364,8 @@ def main():
     parser = argparse.ArgumentParser(description="LEAA RL Evaluation")
     parser.add_argument("--model", type=str, default=None,
                         help="Path to trained model checkpoint")
+    parser.add_argument("--vecnorm", type=str, default=None,
+                        help="Path to VecNormalize stats (.pkl). Auto-detected if not provided")
     parser.add_argument("--episodes", type=int, default=100,
                         help="Number of episodes per stage")
     parser.add_argument("--stage", type=str, default="all",
@@ -265,6 +378,7 @@ def main():
 
     evaluate(
         model_path=args.model,
+        vecnorm_path=args.vecnorm,
         n_episodes=args.episodes,
         stage_name=args.stage,
         visualize=args.visualize,
