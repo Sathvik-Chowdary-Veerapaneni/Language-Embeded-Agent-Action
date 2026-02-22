@@ -45,11 +45,19 @@ class WindModel:
     speed: float = 0.0         # m/s
     gust_variance: float = 0.0 # variance for random gusts
 
-    def get_wind_vector(self) -> np.ndarray:
-        """Return wind velocity vector with optional gust noise."""
+    def get_wind_vector(self, rng: np.random.Generator = None) -> np.ndarray:
+        """Return wind velocity vector with optional gust noise.
+
+        Args:
+            rng: Optional seeded NumPy Generator for reproducible gusts.
+                 Falls back to global np.random if not provided.
+        """
         base = self.direction / (np.linalg.norm(self.direction) + 1e-8) * self.speed
         if self.gust_variance > 0:
-            gust = np.random.normal(0, self.gust_variance, size=3)
+            if rng is not None:
+                gust = rng.normal(0, self.gust_variance, size=3)
+            else:
+                gust = np.random.normal(0, self.gust_variance, size=3)
             return base + gust
         return base.copy()
 
@@ -60,6 +68,7 @@ def _compute_forces(
     velocity: np.ndarray,
     arrow: ArrowType,
     wind: WindModel,
+    rng: np.random.Generator = None,
 ) -> np.ndarray:
     """Compute total force on the arrow at a given state.
 
@@ -84,7 +93,7 @@ def _compute_forces(
         f_drag = np.zeros(3)
 
     # Wind force (relative wind)
-    wind_vec = wind.get_wind_vector()
+    wind_vec = wind.get_wind_vector(rng=rng)
     relative_wind = wind_vec - velocity
     rel_speed = np.linalg.norm(relative_wind)
     if rel_speed > 1e-8:
@@ -103,6 +112,7 @@ def simulate_trajectory(
     wind: WindModel,
     dt: float = 0.005,
     max_time: float = 10.0,
+    rng: np.random.Generator = None,
 ) -> List[Tuple[np.ndarray, np.ndarray]]:
     """Simulate arrow flight using RK4 integration.
 
@@ -133,28 +143,28 @@ def simulate_trajectory(
         # Derivatives: [velocity, acceleration]
 
         # k1
-        a1 = _compute_forces(pos, vel, arrow_type, wind) / m
+        a1 = _compute_forces(pos, vel, arrow_type, wind, rng=rng) / m
         k1_pos = vel
         k1_vel = a1
 
         # k2
         pos2 = pos + 0.5 * dt * k1_pos
         vel2 = vel + 0.5 * dt * k1_vel
-        a2 = _compute_forces(pos2, vel2, arrow_type, wind) / m
+        a2 = _compute_forces(pos2, vel2, arrow_type, wind, rng=rng) / m
         k2_pos = vel2
         k2_vel = a2
 
         # k3
         pos3 = pos + 0.5 * dt * k2_pos
         vel3 = vel + 0.5 * dt * k2_vel
-        a3 = _compute_forces(pos3, vel3, arrow_type, wind) / m
+        a3 = _compute_forces(pos3, vel3, arrow_type, wind, rng=rng) / m
         k3_pos = vel3
         k3_vel = a3
 
         # k4
         pos4 = pos + dt * k3_pos
         vel4 = vel + dt * k3_vel
-        a4 = _compute_forces(pos4, vel4, arrow_type, wind) / m
+        a4 = _compute_forces(pos4, vel4, arrow_type, wind, rng=rng) / m
         k4_pos = vel4
         k4_vel = a4
 
