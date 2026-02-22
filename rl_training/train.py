@@ -116,6 +116,7 @@ class CurriculumCallback(BaseCallback):
         self.best_success_rate = 0.0
         self.stage_episode_count = 0
         self.last_checkpoint_step = 0
+        self.stage_complete = False  # Signal to outer loop for stage advancement
 
     @property
     def current_stage_config(self) -> dict:
@@ -154,7 +155,7 @@ class CurriculumCallback(BaseCallback):
             self.best_success_rate = self.success_rate
             self._save_best()
 
-        # Stage advancement
+        # Stage advancement check — signal to outer loop (don't swap env here)
         stage_cfg = self.current_stage_config
         threshold = stage_cfg.get("success_threshold", 0.9)
         min_eps = stage_cfg.get("min_episodes", 50000)
@@ -165,7 +166,8 @@ class CurriculumCallback(BaseCallback):
             and len(self.hit_history) >= self.window_size
             and self.current_stage < len(self.stages) - 1
         ):
-            self._advance_stage()
+            self.stage_complete = True
+            return False  # Stop current model.learn() to trigger stage swap
 
         return True
 
@@ -186,7 +188,8 @@ class CurriculumCallback(BaseCallback):
         vecnorm_path = self.checkpoint_dir / f"vecnormalize_{stage_name}_best.pkl"
         self.training_env.save(str(vecnorm_path))
 
-    def _advance_stage(self) -> None:
+    def advance_stage(self) -> None:
+        """Advance to next curriculum stage. Called by the outer training loop."""
         old_name = self.current_stage_config["name"]
         self.current_stage += 1
         new_cfg = self.current_stage_config
@@ -194,24 +197,11 @@ class CurriculumCallback(BaseCallback):
         console.print(f"\n[bold green]🎯 Stage advanced: {old_name} → {new_cfg['name']}[/bold green]")
         console.print(f"   Success rate was: {self.success_rate:.1%}")
 
-        # Save old VecNormalize stats before transition
-        old_env = self.training_env
-        old_vecnorm_path = self.checkpoint_dir / f"vecnormalize_{old_name}_final.pkl"
-        old_env.save(str(old_vecnorm_path))
-
         # Reset tracking for new stage
         self.hit_history.clear()
         self.best_success_rate = 0.0
         self.stage_episode_count = 0
-
-        # Recreate vectorized env with new stage config
-        # Carry over VecNormalize stats (don't reset!) with wider clip for transition
-        new_vec_env = create_vec_env(self.num_envs, new_cfg, log_dir=LOGS_DIR)
-        new_env = VecNormalize.load(str(old_vecnorm_path), new_vec_env)
-        new_env.clip_obs = 20.0  # Wider clip during transition to avoid NaN
-        new_env.training = True  # Keep adapting stats
-        self.model.set_env(new_env)
-        console.print(f"   VecNormalize stats carried over, clip_obs widened to 20.0")
+        self.stage_complete = False
 
 
 # ---------- Training Function ----------
@@ -279,9 +269,9 @@ def train(
             learning_rate=1e-4,
             batch_size=256,
             n_steps=2048,
-            gamma=0.99,
+            gamma=1.0,              # Single-step episodes — no discounting needed
             clip_range=0.2,
-            ent_coef=0.01,
+            ent_coef=0.03,          # Higher entropy to prevent premature exploration collapse
             max_grad_norm=0.5,
             verbose=1,
             device=device,
@@ -298,6 +288,10 @@ def train(
     if quick_test:
         total_timesteps = 2048 * num_envs
 
+    # Per-stage timestep budget (divide evenly, remaining goes to last stage)
+    remaining_stages = len(stages) - start_stage
+    timesteps_per_stage = total_timesteps // remaining_stages
+
     # Callback
     callback = CurriculumCallback(
         stages=stages,
@@ -307,17 +301,63 @@ def train(
         checkpoint_freq=50000 if not quick_test else 1024,
     )
 
-    # Train
-    console.print(f"\n[bold]Starting training...[/bold]\n")
+    # Train — per-stage loop with fresh rollout buffers to prevent NaN on transition
+    console.print(f"\n[bold]Starting training...[/bold]")
+    console.print(f"  Timesteps per stage budget: ~{timesteps_per_stage:,}\n")
     start_time = time.time()
+    timesteps_used = 0
 
     try:
-        model.learn(
-            total_timesteps=total_timesteps,
-            callback=callback,
-            progress_bar=True,
-            tb_log_name=f"ppo_{stage_config['name']}",
-        )
+        while timesteps_used < total_timesteps:
+            remaining = total_timesteps - timesteps_used
+            stage_budget = min(timesteps_per_stage, remaining)
+            stage_name = callback.current_stage_config["name"]
+
+            console.print(f"\n[bold cyan]── Stage {callback.current_stage}: {stage_name} "
+                          f"(budget: {stage_budget:,} steps, "
+                          f"remaining: {remaining:,}) ──[/bold cyan]")
+
+            # Update logger for this stage
+            stage_logger = configure(
+                str(LOGS_DIR / f"ppo_{stage_name}"), ["stdout", "tensorboard"]
+            )
+            model.set_logger(stage_logger)
+
+            model.learn(
+                total_timesteps=stage_budget,
+                callback=callback,
+                progress_bar=True,
+                tb_log_name=f"ppo_{stage_name}",
+                reset_num_timesteps=False,  # Keep global timestep counter
+            )
+
+            timesteps_used += stage_budget
+
+            # Check if stage advancement was triggered
+            if callback.stage_complete:
+                # Save old VecNormalize stats before transition
+                old_vecnorm_path = CHECKPOINTS_DIR / f"vecnormalize_{stage_name}_final.pkl"
+                env.save(str(old_vecnorm_path))
+
+                # Advance callback state
+                callback.advance_stage()
+                new_cfg = callback.current_stage_config
+
+                # Close old env and create fresh env for new stage
+                env.close()
+                new_vec_env = create_vec_env(num_envs, new_cfg, log_dir=LOGS_DIR)
+
+                # Load VecNormalize stats from previous stage (carry over, don't reset)
+                env = VecNormalize.load(str(old_vecnorm_path), new_vec_env)
+                env.clip_obs = 20.0   # Wider clip during transition
+                env.training = True   # Keep adapting stats
+
+                # Re-assign fresh env to model — this also resets the rollout buffer
+                model.set_env(env)
+                console.print(f"   VecNormalize stats carried over, clip_obs=20.0")
+                console.print(f"   Rollout buffer reset for clean transition")
+            # If stage not complete, loop continues with another budget chunk on same stage
+
     except KeyboardInterrupt:
         console.print("\n[yellow]Training interrupted by user[/yellow]")
 
@@ -336,6 +376,7 @@ def train(
     console.print(f"\n[bold cyan]═══ Training Summary ═══[/bold cyan]")
     console.print(f"  Time: {elapsed:.0f}s ({elapsed/60:.1f}min)")
     console.print(f"  Episodes: {callback.episode_count:,}")
+    console.print(f"  Timesteps used: {timesteps_used:,} / {total_timesteps:,}")
     console.print(f"  Final stage: {callback.current_stage} ({callback.current_stage_config['name']})")
     console.print(f"  Final success rate: {callback.success_rate:.1%}")
     console.print(f"  Model saved: {final_path}")
