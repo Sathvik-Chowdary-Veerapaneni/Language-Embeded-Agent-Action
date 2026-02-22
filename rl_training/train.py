@@ -26,7 +26,8 @@ from rich.console import Console
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import configure
-from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv, VecNormalize
+from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.utils import set_random_seed
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -63,28 +64,28 @@ def get_device(requested: str = "cpu") -> str:
     return "cpu"
 
 
-def make_env(rank: int, seed: int, stage_config: dict):
-    """Factory function that returns a callable to create an ArcheryEnv.
-
-    Required for SubprocVecEnv — each subprocess needs its own env instance.
-    """
+def make_env(rank: int, seed: int, stage_config: dict, log_dir: Path = None):
+    """Factory function that returns a callable to create a Monitor-wrapped ArcheryEnv."""
     def _init():
         env = ArcheryEnv(stage_config=stage_config)
+        # Wrap in Monitor for proper TensorBoard logging (ep_rew_mean, ep_len_mean)
+        monitor_path = str(log_dir / f"monitor_{rank}") if log_dir else None
+        env = Monitor(env, filename=monitor_path)
         env.reset(seed=seed + rank)
         return env
     set_random_seed(seed + rank)
     return _init
 
 
-def create_vec_env(num_envs: int, stage_config: dict, seed: int = 42):
-    """Create a vectorized environment."""
+def create_vec_env(num_envs: int, stage_config: dict, seed: int = 42, log_dir: Path = None):
+    """Create a vectorized environment with Monitor wrappers."""
     if num_envs > 1:
         env = SubprocVecEnv(
-            [make_env(i, seed, stage_config) for i in range(num_envs)],
+            [make_env(i, seed, stage_config, log_dir) for i in range(num_envs)],
             start_method="fork",
         )
     else:
-        env = DummyVecEnv([make_env(0, seed, stage_config)])
+        env = DummyVecEnv([make_env(0, seed, stage_config, log_dir)])
     return env
 
 
@@ -172,6 +173,9 @@ class CurriculumCallback(BaseCallback):
         stage_name = self.current_stage_config["name"]
         path = self.checkpoint_dir / f"{stage_name}_step_{self.num_timesteps}.zip"
         self.model.save(str(path))
+        # Save VecNormalize stats alongside model
+        vecnorm_path = self.checkpoint_dir / f"vecnormalize_{stage_name}_step_{self.num_timesteps}.pkl"
+        self.training_env.save(str(vecnorm_path))
         if self.verbose:
             console.print(f"  💾 Checkpoint saved: {path.name} (success: {self.success_rate:.1%})")
 
@@ -179,6 +183,8 @@ class CurriculumCallback(BaseCallback):
         stage_name = self.current_stage_config["name"]
         path = self.checkpoint_dir / f"{stage_name}_best.zip"
         self.model.save(str(path))
+        vecnorm_path = self.checkpoint_dir / f"vecnormalize_{stage_name}_best.pkl"
+        self.training_env.save(str(vecnorm_path))
 
     def _advance_stage(self) -> None:
         old_name = self.current_stage_config["name"]
@@ -188,14 +194,24 @@ class CurriculumCallback(BaseCallback):
         console.print(f"\n[bold green]🎯 Stage advanced: {old_name} → {new_cfg['name']}[/bold green]")
         console.print(f"   Success rate was: {self.success_rate:.1%}")
 
+        # Save old VecNormalize stats before transition
+        old_env = self.training_env
+        old_vecnorm_path = self.checkpoint_dir / f"vecnormalize_{old_name}_final.pkl"
+        old_env.save(str(old_vecnorm_path))
+
         # Reset tracking for new stage
         self.hit_history.clear()
         self.best_success_rate = 0.0
         self.stage_episode_count = 0
 
         # Recreate vectorized env with new stage config
-        new_env = create_vec_env(self.num_envs, new_cfg)
+        # Carry over VecNormalize stats (don't reset!) with wider clip for transition
+        new_vec_env = create_vec_env(self.num_envs, new_cfg, log_dir=LOGS_DIR)
+        new_env = VecNormalize.load(str(old_vecnorm_path), new_vec_env)
+        new_env.clip_obs = 20.0  # Wider clip during transition to avoid NaN
+        new_env.training = True  # Keep adapting stats
         self.model.set_env(new_env)
+        console.print(f"   VecNormalize stats carried over, clip_obs widened to 20.0")
 
 
 # ---------- Training Function ----------
@@ -224,12 +240,32 @@ def train(
     CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Create vectorized environment
-    env = create_vec_env(num_envs, stage_config)
+    # Create vectorized environment with Monitor wrappers + VecNormalize
+    env = create_vec_env(num_envs, stage_config, log_dir=LOGS_DIR)
+    env = VecNormalize(env, norm_obs=True, norm_reward=True, clip_obs=10.0, clip_reward=10.0)
+    console.print("  VecNormalize: obs=True, reward=True, clip=10.0")
 
     # Create or load model
     if resume_path:
         console.print(f"  Resuming from: {resume_path}")
+        # Try to load VecNormalize stats — match filename pattern
+        resume_basename = os.path.basename(resume_path).replace(".zip", "")
+        vecnorm_candidates = [
+            os.path.join(os.path.dirname(resume_path), f"vecnormalize_{resume_basename}.pkl"),
+            os.path.join(os.path.dirname(resume_path), f"vecnormalize_{resume_basename.split('_')[0]}_{resume_basename.split('_')[1]}_best.pkl"),
+        ]
+        # Also try best checkpoint for the stage
+        stage_name = stage_config["name"]
+        vecnorm_candidates.append(str(CHECKPOINTS_DIR / f"vecnormalize_{stage_name}_best.pkl"))
+        vecnorm_candidates.append(str(CHECKPOINTS_DIR / f"vecnormalize_{stage_name}_final.pkl"))
+
+        for vn_path in vecnorm_candidates:
+            if os.path.exists(vn_path):
+                env = VecNormalize.load(vn_path, env.venv)
+                console.print(f"  Loaded VecNormalize stats from: {os.path.basename(vn_path)}")
+                break
+        else:
+            console.print("  [yellow]⚠ No VecNormalize stats found, using fresh stats[/yellow]")
         model = PPO.load(resume_path, env=env, device=device)
     else:
         policy_kwargs = dict(
@@ -240,13 +276,14 @@ def train(
             "MlpPolicy",
             env,
             policy_kwargs=policy_kwargs,
-            learning_rate=3e-4,
+            learning_rate=1e-4,
             batch_size=256,
             n_steps=2048,
             gamma=0.99,
             clip_range=0.2,
             ent_coef=0.01,
-            verbose=0,
+            max_grad_norm=0.5,
+            verbose=1,
             device=device,
             tensorboard_log=str(LOGS_DIR),
         )
@@ -289,6 +326,8 @@ def train(
     # Final save
     final_path = CHECKPOINTS_DIR / f"final_stage{callback.current_stage}.zip"
     model.save(str(final_path))
+    vecnorm_final = CHECKPOINTS_DIR / f"vecnormalize_final_stage{callback.current_stage}.pkl"
+    env.save(str(vecnorm_final))
 
     # Cleanup vectorized env
     env.close()

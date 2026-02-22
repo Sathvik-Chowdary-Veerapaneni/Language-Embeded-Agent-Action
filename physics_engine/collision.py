@@ -110,37 +110,47 @@ def compute_reward(
     hit: bool,
     distance_from_center: Optional[float],
     target_radius: float,
+    closest_approach: Optional[float] = None,
 ) -> float:
-    """Compute reward based on hit precision.
+    """Compute reward based on hit precision with continuous gradient signal.
 
-    Scoring zones:
+    Scoring zones (on hit):
         - Bullseye (center 10%): +100
         - Inner ring (10-50%):   +50
         - Outer ring (50-100%):  +25
-        - Miss:                  -1
+
+    Miss reward (exponential decay):
+        10.0 * exp(-distance / (2 * target_radius))
+
+        Examples at radius=0.5m:
+            1 radius away  → ~6.1
+            2 radii away   → ~3.7
+            5 radii away   → ~0.8
+            10 radii away  → ~0.07
 
     Args:
         hit: Whether the arrow hit the target.
         distance_from_center: Distance from hit point to target center.
         target_radius: Target sphere radius.
+        closest_approach: Closest distance any trajectory point got to target center (for misses).
 
     Returns:
         Float reward value.
     """
-    if not hit or distance_from_center is None:
-        return -1.0
+    if hit and distance_from_center is not None:
+        # Normalize distance to [0, 1] relative to radius
+        ratio = distance_from_center / target_radius
 
-    # Normalize distance to [0, 1] relative to radius
-    ratio = distance_from_center / target_radius
+        if ratio <= 0.10:
+            return 100.0   # Bullseye
+        elif ratio <= 0.50:
+            return 50.0    # Inner ring
+        elif ratio <= 1.00:
+            return 25.0    # Outer ring
 
-    if ratio <= 0.10:
-        return 100.0   # Bullseye
-    elif ratio <= 0.50:
-        return 50.0    # Inner ring
-    elif ratio <= 1.00:
-        return 25.0    # Outer ring
-    else:
-        return -1.0    # Outside target (shouldn't happen if check_hit works)
+    # Miss — exponential decay based on closest approach
+    dist = closest_approach if closest_approach is not None else (distance_from_center or 50.0)
+    return 10.0 * np.exp(-dist / (2.0 * target_radius))
 
 
 def move_targets(
@@ -252,9 +262,9 @@ if __name__ == "__main__":
     )
     hit_miss, _, _ = check_hit(traj_miss, target_far)
     assert not hit_miss, "Expected miss!"
-    reward_miss = compute_reward(hit_miss, None, target_far.radius)
-    assert reward_miss == -1.0
-    console.print("  ✅ Miss detected correctly, reward = -1.0")
+    reward_miss = compute_reward(hit_miss, None, target_far.radius, closest_approach=50.0)
+    assert reward_miss < 0.01, f"Far miss should be near 0, got {reward_miss}"
+    console.print(f"  ✅ Miss detected correctly, reward = {reward_miss:.4f}")
 
     # Test 3: Reward zones
     console.print("\n[bold]Test 3:[/bold] Reward zone validation")
@@ -262,11 +272,17 @@ if __name__ == "__main__":
     assert compute_reward(True, 0.05, r) == 100.0, "Bullseye failed"
     assert compute_reward(True, 0.30, r) == 50.0, "Inner ring failed"
     assert compute_reward(True, 0.80, r) == 25.0, "Outer ring failed"
-    assert compute_reward(False, None, r) == -1.0, "Miss reward failed"
+    # Near miss: closest_approach = 2.0, radius = 1.0 → 10*exp(-2/2) ≈ 3.68
+    near_miss = compute_reward(False, None, r, closest_approach=2.0)
+    assert near_miss > 3.0, f"Near miss should be ~3.68, got {near_miss}"
+    # Far miss: closest_approach = 30.0 → 10*exp(-30/2) ≈ 0.0
+    far_miss = compute_reward(False, None, r, closest_approach=30.0)
+    assert far_miss < 0.01, f"Far miss should be ~0, got {far_miss}"
     console.print("  ✅ Bullseye (0.05/1.0) → 100")
     console.print("  ✅ Inner ring (0.30/1.0) → 50")
     console.print("  ✅ Outer ring (0.80/1.0) → 25")
-    console.print("  ✅ Miss → -1")
+    console.print(f"  ✅ Near miss (2.0m) → {near_miss:.2f}")
+    console.print(f"  ✅ Far miss (30.0m) → {far_miss:.2f}")
 
     # Test 4: Moving targets
     console.print("\n[bold]Test 4:[/bold] Moving targets with boundary bounce")

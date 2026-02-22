@@ -42,14 +42,14 @@ from physics_engine.collision import (
 
 # Default stage config (static, close range)
 DEFAULT_STAGE_CONFIG = {
-    "target_distance_range": [5, 15],
+    "target_distance_range": [3, 10],
     "target_moving": False,
     "target_speed_range": [0, 0],
     "wind_enabled": False,
     "wind_speed_range": [0, 0],
     "agent_moving": False,
     "agent_speed": 0.0,
-    "target_radius": 0.5,
+    "target_radius": 2.0,
 }
 
 # Target radius by curriculum stage type
@@ -202,6 +202,9 @@ class ArcheryEnv(gym.Env):
             [elevation_diff],                            # 1
         ]).astype(np.float32)                            # Total: 22
 
+        # Safety net: clamp NaN/inf to prevent training crash
+        obs = np.nan_to_num(obs, nan=0.0, posinf=10.0, neginf=-10.0)
+
         return obs
 
     def reset(self, seed=None, options=None):
@@ -267,18 +270,17 @@ class ArcheryEnv(gym.Env):
         # Check hit
         hit, hit_pos, dist_from_center = check_hit(trajectory, self.target)
 
-        # Compute reward
-        reward = compute_reward(hit, dist_from_center, self.target.radius)
+        # Find closest approach for reward shaping
+        closest_dist = min(
+            np.linalg.norm(p - self.target.position)
+            for p, _ in trajectory
+        )
 
-        # Bonus: distance-based shaping for near misses (helps learning)
-        if not hit:
-            closest_dist = min(
-                np.linalg.norm(p - self.target.position)
-                for p, _ in trajectory
-            )
-            # Small positive signal for getting close
-            proximity_bonus = max(0, 1.0 - closest_dist / 10.0) * 5.0
-            reward += proximity_bonus
+        # Compute reward (continuous gradient signal via closest_approach)
+        reward = compute_reward(
+            hit, dist_from_center, self.target.radius,
+            closest_approach=closest_dist,
+        )
 
         self.last_reward = reward
         self.episode_count += 1
@@ -294,6 +296,7 @@ class ArcheryEnv(gym.Env):
             "hit": hit,
             "reward": reward,
             "distance_from_center": dist_from_center,
+            "closest_approach": closest_dist,
             "target_distance": np.linalg.norm(
                 self.target.position - self.agent_position
             ),
