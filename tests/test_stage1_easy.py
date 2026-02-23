@@ -161,25 +161,27 @@ class TestEnvironmentStep:
 # ============================================================
 
 class TestRewardZones:
-    """Test reward calculation correctness."""
+    """Test reward calculation correctness (v2: pure continuous)."""
 
-    def test_bullseye_reward(self):
-        """Bullseye (center 10%) should give 100 points."""
-        assert compute_reward(True, 0.05, 1.0) == 100.0
+    def test_center_hit_reward(self):
+        """Dead center should give max reward: 20 + 80*1² = 100."""
         assert compute_reward(True, 0.0, 1.0) == 100.0
-        assert compute_reward(True, 0.09, 1.0) == 100.0
 
-    def test_inner_ring_reward(self):
-        """Inner ring (10-50%) should give 50 points."""
-        assert compute_reward(True, 0.11, 1.0) == 50.0
-        assert compute_reward(True, 0.30, 1.0) == 50.0
-        assert compute_reward(True, 0.49, 1.0) == 50.0
+    def test_halfway_hit_reward(self):
+        """Halfway from center: precision=0.5, reward = 20 + 80*0.25 = 40."""
+        assert compute_reward(True, 0.5, 1.0) == 40.0
 
-    def test_outer_ring_reward(self):
-        """Outer ring (50-100%) should give 25 points."""
-        assert compute_reward(True, 0.51, 1.0) == 25.0
-        assert compute_reward(True, 0.80, 1.0) == 25.0
-        assert compute_reward(True, 0.99, 1.0) == 25.0
+    def test_edge_hit_reward(self):
+        """Edge graze: precision≈0, reward ≈ 20."""
+        r = compute_reward(True, 0.99, 1.0)
+        assert 20.0 <= r < 20.1
+
+    def test_reward_is_continuous(self):
+        """Reward should increase continuously toward center."""
+        rewards = [compute_reward(True, d, 1.0) for d in [0.9, 0.7, 0.5, 0.3, 0.1, 0.0]]
+        # Should be strictly increasing
+        for i in range(len(rewards) - 1):
+            assert rewards[i] < rewards[i + 1], f"Reward not increasing: {rewards}"
 
     def test_miss_reward_near(self):
         """Near miss should give small positive reward."""
@@ -198,12 +200,13 @@ class TestRewardZones:
         r3 = compute_reward(False, None, 1.0, closest_approach=20.0)
         assert r1 > r2 > r3
 
-    def test_reward_scales_with_target_radius(self):
-        """Bullseye reward should trigger relative to target size."""
-        # 5% of a 2.0m target = 0.1m from center → bullseye
-        assert compute_reward(True, 0.1, 2.0) == 100.0
-        # 5% of a 0.5m target = 0.025m → bullseye
-        assert compute_reward(True, 0.025, 0.5) == 100.0
+    def test_precision_gradient_everywhere(self):
+        """Every 0.1 step toward center should increase reward — no flat zones."""
+        prev = compute_reward(True, 1.0, 1.0)
+        for d in [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.0]:
+            r = compute_reward(True, d, 1.0)
+            assert r > prev, f"Flat zone at dist={d}: {r} <= {prev}"
+            prev = r
 
 
 # ============================================================
@@ -289,7 +292,7 @@ class TestCollisionBasics:
         assert hit is True
         assert pos is not None
         assert dist is not None
-        assert dist <= target.radius + 1e-6  # Floating-point tolerance
+        assert dist <= target.radius  # Closest approach can be less than radius
 
     def test_miss_detected(self):
         """Trajectory far from target should not register hit."""
