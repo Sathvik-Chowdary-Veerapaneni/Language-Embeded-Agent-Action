@@ -24,11 +24,11 @@ import torch
 from rich.console import Console
 
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList
 from stable_baselines3.common.logger import configure
+from stable_baselines3.common.utils import get_linear_fn, set_random_seed
 from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv, VecNormalize
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.utils import set_random_seed
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -204,6 +204,26 @@ class CurriculumCallback(BaseCallback):
         self.stage_complete = False
 
 
+class EntropyCoefficientSchedule(BaseCallback):
+    """Linearly decay ent_coef over training to shift from exploration to exploitation."""
+
+    def __init__(self, start: float = 0.05, end: float = 0.005,
+                 total_timesteps: int = 5_000_000, verbose: int = 0):
+        super().__init__(verbose)
+        self.start = start
+        self.end = end
+        self.total_timesteps = total_timesteps
+
+    def _on_step(self) -> bool:
+        progress = min(self.num_timesteps / self.total_timesteps, 1.0)
+        new_ent = self.start - (self.start - self.end) * progress
+        self.model.ent_coef = new_ent
+        # Log every 100 steps to avoid TensorBoard spam
+        if self.num_timesteps % 100 == 0:
+            self.logger.record("train/ent_coef_scheduled", new_ent)
+        return True
+
+
 # ---------- Training Function ----------
 def train(
     device: str = "cpu",
@@ -258,20 +278,26 @@ def train(
             console.print("  [yellow]⚠ No VecNormalize stats found, using fresh stats[/yellow]")
         model = PPO.load(resume_path, env=env, device=device)
     else:
+        # v2: Separate policy and value networks
         policy_kwargs = dict(
-            net_arch=[256, 256, 128],
+            net_arch=dict(
+                pi=[256, 256],     # actor
+                vf=[256, 256],     # critic — independent from actor
+            ),
+            activation_fn=torch.nn.Tanh,
         )
 
         model = PPO(
             "MlpPolicy",
             env,
             policy_kwargs=policy_kwargs,
-            learning_rate=1e-4,
-            batch_size=256,
+            learning_rate=get_linear_fn(3e-4, 1e-4, 1.0),  # 3e-4 → 1e-4 over training
             n_steps=2048,
-            gamma=1.0,              # Single-step episodes — no discounting needed
+            batch_size=512,
+            n_epochs=5,                  # v2: reduced from 10 for larger batch
+            gamma=1.0,                   # Single-step episodes
             clip_range=0.2,
-            ent_coef=0.03,          # Higher entropy to prevent premature exploration collapse
+            ent_coef=0.05,               # Initial — callback will schedule decay
             max_grad_norm=0.5,
             verbose=1,
             device=device,
@@ -288,32 +314,44 @@ def train(
     if quick_test:
         total_timesteps = 2048 * num_envs
 
-    # Per-stage timestep budget (divide evenly, remaining goes to last stage)
-    remaining_stages = len(stages) - start_stage
-    timesteps_per_stage = total_timesteps // remaining_stages
+    # Per-stage timestep budget — weighted: harder stages get more time
+    stage_weights = [1, 1, 2, 3, 4, 5]  # static_close=1, full_dynamic=5
+    remaining_weights = stage_weights[start_stage:len(stages)]
+    total_weight = sum(remaining_weights)
+    timesteps_per_stage = [
+        int(total_timesteps * w / total_weight) for w in remaining_weights
+    ]
+    # Track which budget index we're on
+    stage_budget_idx = 0
 
-    # Callback
-    callback = CurriculumCallback(
+    # Callbacks
+    curriculum_cb = CurriculumCallback(
         stages=stages,
         current_stage=start_stage,
         checkpoint_dir=CHECKPOINTS_DIR,
         num_envs=num_envs,
         checkpoint_freq=50000 if not quick_test else 1024,
     )
+    entropy_cb = EntropyCoefficientSchedule(
+        start=0.05, end=0.005, total_timesteps=total_timesteps,
+    )
+    callback = CallbackList([curriculum_cb, entropy_cb])
 
     # Train — per-stage loop with fresh rollout buffers to prevent NaN on transition
     console.print(f"\n[bold]Starting training...[/bold]")
-    console.print(f"  Timesteps per stage budget: ~{timesteps_per_stage:,}\n")
+    console.print(f"  Stage budgets (weighted): {[f'{t:,}' for t in timesteps_per_stage]}\n")
     start_time = time.time()
     timesteps_used = 0
 
     try:
         while timesteps_used < total_timesteps:
             remaining = total_timesteps - timesteps_used
-            stage_budget = min(timesteps_per_stage, remaining)
-            stage_name = callback.current_stage_config["name"]
+            # Use weighted budget for current stage, fall back to remaining
+            current_budget = timesteps_per_stage[min(stage_budget_idx, len(timesteps_per_stage) - 1)]
+            stage_budget = min(current_budget, remaining)
+            stage_name = curriculum_cb.current_stage_config["name"]
 
-            console.print(f"\n[bold cyan]── Stage {callback.current_stage}: {stage_name} "
+            console.print(f"\n[bold cyan]── Stage {curriculum_cb.current_stage}: {stage_name} "
                           f"(budget: {stage_budget:,} steps, "
                           f"remaining: {remaining:,}) ──[/bold cyan]")
 
@@ -334,14 +372,15 @@ def train(
             timesteps_used += stage_budget
 
             # Check if stage advancement was triggered
-            if callback.stage_complete:
+            if curriculum_cb.stage_complete:
                 # Save old VecNormalize stats before transition
                 old_vecnorm_path = CHECKPOINTS_DIR / f"vecnormalize_{stage_name}_final.pkl"
                 env.save(str(old_vecnorm_path))
 
                 # Advance callback state
-                callback.advance_stage()
-                new_cfg = callback.current_stage_config
+                curriculum_cb.advance_stage()
+                stage_budget_idx += 1
+                new_cfg = curriculum_cb.current_stage_config
 
                 # Close old env and create fresh env for new stage
                 env.close()
@@ -364,9 +403,9 @@ def train(
     elapsed = time.time() - start_time
 
     # Final save
-    final_path = CHECKPOINTS_DIR / f"final_stage{callback.current_stage}.zip"
+    final_path = CHECKPOINTS_DIR / f"final_stage{curriculum_cb.current_stage}.zip"
     model.save(str(final_path))
-    vecnorm_final = CHECKPOINTS_DIR / f"vecnormalize_final_stage{callback.current_stage}.pkl"
+    vecnorm_final = CHECKPOINTS_DIR / f"vecnormalize_final_stage{curriculum_cb.current_stage}.pkl"
     env.save(str(vecnorm_final))
 
     # Cleanup vectorized env
@@ -375,10 +414,10 @@ def train(
     # Summary
     console.print(f"\n[bold cyan]═══ Training Summary ═══[/bold cyan]")
     console.print(f"  Time: {elapsed:.0f}s ({elapsed/60:.1f}min)")
-    console.print(f"  Episodes: {callback.episode_count:,}")
+    console.print(f"  Episodes: {curriculum_cb.episode_count:,}")
     console.print(f"  Timesteps used: {timesteps_used:,} / {total_timesteps:,}")
-    console.print(f"  Final stage: {callback.current_stage} ({callback.current_stage_config['name']})")
-    console.print(f"  Final success rate: {callback.success_rate:.1%}")
+    console.print(f"  Final stage: {curriculum_cb.current_stage} ({curriculum_cb.current_stage_config['name']})")
+    console.print(f"  Final success rate: {curriculum_cb.success_rate:.1%}")
     console.print(f"  Model saved: {final_path}")
 
     return model
