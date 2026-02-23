@@ -1,5 +1,5 @@
-# LEAA Curriculum Learning — Stage Definitions
-# Philosophy: barn door first, then shrink the target.
+# LEAA Curriculum Learning — Stage Definitions (v2)
+# More aggressive advancement — don't waste budget perfecting easy stages.
 # Target radius starts large (2.0m) and shrinks as the agent masters each stage.
 
 stages:
@@ -9,8 +9,8 @@ stages:
     wind_enabled: false
     agent_moving: false
     target_radius: 2.0
-    success_threshold: 0.90
-    min_episodes: 50000
+    success_threshold: 0.85
+    min_episodes: 30000
 
   - name: "static_medium"
     target_distance_range: [8, 20]
@@ -18,8 +18,8 @@ stages:
     wind_enabled: false
     agent_moving: false
     target_radius: 1.5
-    success_threshold: 0.85
-    min_episodes: 80000
+    success_threshold: 0.80
+    min_episodes: 50000
 
   - name: "static_far"
     target_distance_range: [15, 50]
@@ -27,8 +27,8 @@ stages:
     wind_enabled: false
     agent_moving: false
     target_radius: 1.5
-    success_threshold: 0.85
-    min_episodes: 100000
+    success_threshold: 0.75
+    min_episodes: 80000
 
   - name: "moving_slow"
     target_distance_range: [10, 40]
@@ -37,8 +37,8 @@ stages:
     wind_enabled: false
     agent_moving: false
     target_radius: 1.5
-    success_threshold: 0.80
-    min_episodes: 150000
+    success_threshold: 0.60
+    min_episodes: 100000
 
   - name: "wind"
     target_distance_range: [10, 50]
@@ -48,8 +48,8 @@ stages:
     wind_speed_range: [0, 8]
     agent_moving: false
     target_radius: 1.0
-    success_threshold: 0.75
-    min_episodes: 200000
+    success_threshold: 0.50
+    min_episodes: 150000
 
   - name: "full_dynamic"
     target_distance_range: [10, 50]
@@ -60,5 +60,5 @@ stages:
     agent_moving: true
     agent_speed: 2.0
     target_radius: 0.75
-    success_threshold: 0.70
-    min_episodes: 300000
+    success_threshold: 0.40
+    min_episodes: 200000
