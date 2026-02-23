@@ -72,6 +72,22 @@ def _line_segment_sphere_intersection(
     return False, None
 
 
+def _closest_point_on_segment(
+    p1: np.ndarray, p2: np.ndarray, center: np.ndarray,
+) -> np.ndarray:
+    """Find the point on segment p1→p2 closest to center.
+
+    Projects center onto the line through p1→p2, then clamps to [0,1].
+    """
+    d = p2 - p1
+    length_sq = np.dot(d, d)
+    if length_sq < 1e-12:
+        return p1.copy()
+    t = np.dot(center - p1, d) / length_sq
+    t = np.clip(t, 0.0, 1.0)
+    return p1 + t * d
+
+
 def check_hit(
     trajectory_points: List[Tuple[np.ndarray, np.ndarray]],
     target: Target,
@@ -79,7 +95,11 @@ def check_hit(
     """Check if an arrow trajectory hits a target.
 
     Uses line-segment-sphere intersection between consecutive trajectory
-    points to avoid missing thin targets at high speed.
+    points to detect hits. On hit, scans ALL trajectory segments to find
+    the minimum closest approach distance to the target center.
+
+    This gives the TRUE precision metric — a dead-center shot returns 0.0,
+    an edge graze returns ~radius.
 
     Args:
         trajectory_points: List of (position, velocity) from simulate_trajectory.
@@ -89,21 +109,38 @@ def check_hit(
         (hit, hit_position, distance_from_center)
         - hit: True if any segment intersects the target sphere
         - hit_position: 3D point of first intersection (or None)
-        - distance_from_center: Distance from hit point to target center (or None)
+        - distance_from_center: Minimum closest approach across ALL segments (or None).
+          Range: [0.0, radius] for hits. 0.0 = dead center.
     """
+    first_hit_point = None
+    hit_detected = False
+
+    # Pass 1: detect if any segment intersects the sphere AND
+    # compute minimum closest approach across ALL segments
+    min_dist = float("inf")
     for i in range(len(trajectory_points) - 1):
         p1 = trajectory_points[i][0]
         p2 = trajectory_points[i + 1][0]
 
+        # Check for hit
         hit, hit_point = _line_segment_sphere_intersection(
             p1, p2, target.position, target.radius
         )
+        if hit and hit_point is not None and not hit_detected:
+            first_hit_point = hit_point
+            hit_detected = True
 
-        if hit and hit_point is not None:
-            dist_from_center = np.linalg.norm(hit_point - target.position)
-            return True, hit_point, dist_from_center
+        # Track closest approach (for both hits and misses)
+        closest = _closest_point_on_segment(p1, p2, target.position)
+        dist = np.linalg.norm(closest - target.position)
+        if dist < min_dist:
+            min_dist = dist
 
-    return False, None, None
+    # Return closest approach for both hits (precision) and misses (reward shaping)
+    if min_dist == float("inf"):
+        min_dist = None  # No trajectory segments
+
+    return hit_detected, first_hit_point, min_dist
 
 
 def compute_reward(
@@ -112,21 +149,17 @@ def compute_reward(
     target_radius: float,
     closest_approach: Optional[float] = None,
 ) -> float:
-    """Compute reward based on hit precision with continuous gradient signal.
+    """Compute reward with pure continuous precision signal (v2).
 
-    Scoring zones (on hit):
-        - Bullseye (center 10%): +100
-        - Inner ring (10-50%):   +50
-        - Outer ring (50-100%):  +25
+    On hit — continuous quadratic:
+        precision = 1.0 - (distance_from_center / target_radius)  # 1.0 at center, 0.0 at edge
+        reward = 20.0 + 80.0 * (precision ** 2)
+        - Dead center  (precision=1.0) → 100
+        - Halfway      (precision=0.5) → 40
+        - Edge graze   (precision=0.0) → 20
 
-    Miss reward (exponential decay):
+    On miss — exponential decay (unchanged from v1):
         10.0 * exp(-distance / (2 * target_radius))
-
-        Examples at radius=0.5m:
-            1 radius away  → ~6.1
-            2 radii away   → ~3.7
-            5 radii away   → ~0.8
-            10 radii away  → ~0.07
 
     Args:
         hit: Whether the arrow hit the target.
@@ -138,19 +171,14 @@ def compute_reward(
         Float reward value.
     """
     if hit and distance_from_center is not None:
-        # Normalize distance to [0, 1] relative to radius
-        ratio = distance_from_center / target_radius
+        # Pure continuous: closer to center = exponentially more reward
+        ratio = distance_from_center / max(target_radius, 1e-8)
+        precision = max(0.0, 1.0 - ratio)
+        return 20.0 + 80.0 * (precision ** 2)
 
-        if ratio <= 0.10:
-            return 100.0   # Bullseye
-        elif ratio <= 0.50:
-            return 50.0    # Inner ring
-        elif ratio <= 1.00:
-            return 25.0    # Outer ring
-
-    # Miss — exponential decay based on closest approach
+    # Miss — exponential decay based on closest approach (v1 formula unchanged)
     dist = closest_approach if closest_approach is not None else (distance_from_center or 50.0)
-    return 10.0 * np.exp(-dist / (2.0 * target_radius))
+    return 10.0 * np.exp(-dist / (2.0 * max(target_radius, 1e-8)))
 
 
 def move_targets(
@@ -266,21 +294,28 @@ if __name__ == "__main__":
     assert reward_miss < 0.01, f"Far miss should be near 0, got {reward_miss}"
     console.print(f"  ✅ Miss detected correctly, reward = {reward_miss:.4f}")
 
-    # Test 3: Reward zones
-    console.print("\n[bold]Test 3:[/bold] Reward zone validation")
+    # Test 3: Reward validation (continuous quadratic formula)
+    # reward = 20.0 + 80.0 * (1 - d/r)^2
+    console.print("\n[bold]Test 3:[/bold] Reward validation (continuous formula)")
     r = 1.0
-    assert compute_reward(True, 0.05, r) == 100.0, "Bullseye failed"
-    assert compute_reward(True, 0.30, r) == 50.0, "Inner ring failed"
-    assert compute_reward(True, 0.80, r) == 25.0, "Outer ring failed"
+    # Dead center: d=0 → precision=1.0 → 20 + 80*1 = 100
+    bullseye = compute_reward(True, 0.0, r)
+    assert bullseye == 100.0, f"Dead center failed: {bullseye}"
+    # Halfway: d=0.5 → precision=0.5 → 20 + 80*0.25 = 40
+    halfway = compute_reward(True, 0.5, r)
+    assert halfway == 40.0, f"Halfway failed: {halfway}"
+    # Edge graze: d=1.0 → precision=0.0 → 20 + 80*0 = 20
+    edge = compute_reward(True, 1.0, r)
+    assert edge == 20.0, f"Edge graze failed: {edge}"
     # Near miss: closest_approach = 2.0, radius = 1.0 → 10*exp(-2/2) ≈ 3.68
     near_miss = compute_reward(False, None, r, closest_approach=2.0)
     assert near_miss > 3.0, f"Near miss should be ~3.68, got {near_miss}"
     # Far miss: closest_approach = 30.0 → 10*exp(-30/2) ≈ 0.0
     far_miss = compute_reward(False, None, r, closest_approach=30.0)
     assert far_miss < 0.01, f"Far miss should be ~0, got {far_miss}"
-    console.print("  ✅ Bullseye (0.05/1.0) → 100")
-    console.print("  ✅ Inner ring (0.30/1.0) → 50")
-    console.print("  ✅ Outer ring (0.80/1.0) → 25")
+    console.print(f"  ✅ Dead center (0.0/1.0) → {bullseye}")
+    console.print(f"  ✅ Halfway (0.5/1.0) → {halfway}")
+    console.print(f"  ✅ Edge graze (1.0/1.0) → {edge}")
     console.print(f"  ✅ Near miss (2.0m) → {near_miss:.2f}")
     console.print(f"  ✅ Far miss (30.0m) → {far_miss:.2f}")
 
