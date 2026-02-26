@@ -284,23 +284,31 @@ class KLSafetyCallback(BaseCallback):
 
 
 class TightenVecNormalize(BaseCallback):
-    """After tighten_after steps, tighten VecNormalize clip_obs from wide resume value to normal.
+    """Tighten VecNormalize clip_obs from wide transition value back to normal.
 
-    On resume from a checkpoint, clip_obs is widened to 15.0 to tolerate the
-    obs distribution shift between static and dynamic stages. After 20k steps
-    the running stats have adapted enough to tighten back to 10.0.
+    On resume or stage transition, clip_obs is widened (15-20) to tolerate
+    the observation distribution shift. After warmup_steps the running stats
+    have adapted enough to tighten back to clip_obs (default 10.0).
+
+    Re-triggerable: call trigger(current_step) after each stage transition.
     """
 
-    def __init__(self, tighten_after: int = 20000, clip_obs: float = 10.0, verbose: int = 0):
+    def __init__(self, warmup_steps: int = 20000, clip_obs: float = 10.0, verbose: int = 0):
         super().__init__(verbose)
-        self.tighten_after = tighten_after
+        self.warmup_steps = warmup_steps
         self.clip_obs = clip_obs
-        self.tightened = False
+        self._target_step: int = None  # Global timestep at which to tighten
+        self._active = False
+
+    def trigger(self, current_step: int) -> None:
+        """Schedule tightening warmup_steps after current_step."""
+        self._target_step = current_step + self.warmup_steps
+        self._active = True
 
     def _on_step(self) -> bool:
-        if not self.tightened and self.num_timesteps >= self.tighten_after:
+        if self._active and self._target_step is not None and self.num_timesteps >= self._target_step:
             self.model.env.clip_obs = self.clip_obs
-            self.tightened = True
+            self._active = False
             console.print(f"\n[cyan]📐 VecNormalize clip_obs tightened to {self.clip_obs}[/cyan]")
         return True
 
@@ -317,8 +325,11 @@ def train(
 ):
     """Main training loop with curriculum progression and vectorized envs."""
 
-    # v3: Force 8 envs for KL stability (15 envs caused KL spikes to 0.047)
-    num_envs = 8
+    # v3: 15 envs caused KL spikes to 0.047. Cap at 12 with a warning.
+    if num_envs > 12:
+        console.print(f"  [yellow]⚠ num_envs={num_envs} may cause KL instability "
+                      f"(v3 saw spikes at 15). Capping to 12.[/yellow]")
+        num_envs = 12
 
     # --start-stage controls which stage to begin at (independent of --resume).
     # --resume controls checkpoint loading (independent of --start-stage).
@@ -488,16 +499,18 @@ def train(
     # KL safety: halve LR if approx_kl spikes (prevents v2/v3 destabilization)
     kl_safety_cb = KLSafetyCallback(kl_threshold=0.04, consecutive_limit=3)
 
-    callbacks = [curriculum_cb, entropy_cb, kl_safety_cb]
+    # VecNormalize tightening: always active (triggered on resume AND stage transitions)
+    tighten_cb = TightenVecNormalize(warmup_steps=20000, clip_obs=10.0)
 
-    # VecNormalize tightening: only active when resuming (we widened clip_obs to 15.0)
+    callbacks = [curriculum_cb, entropy_cb, kl_safety_cb, tighten_cb]
+
+    # Trigger tighten immediately if resuming (clip_obs was widened to 15.0)
     if is_fine_tune:
-        tighten_cb = TightenVecNormalize(tighten_after=20000, clip_obs=10.0)
-        callbacks.append(tighten_cb)
+        tighten_cb.trigger(current_step=0)
         console.print(f"  TightenVecNormalize: clip_obs=15.0 → 10.0 after 20k steps")
 
-    console.print(f"  Active callbacks: CurriculumCallback, EntropyCoefficientSchedule, KLSafetyCallback"
-                  + (", TightenVecNormalize" if is_fine_tune else ""))
+    console.print(f"  Active callbacks: CurriculumCallback, EntropyCoefficientSchedule, "
+                  f"KLSafetyCallback, TightenVecNormalize")
 
     callback = CallbackList(callbacks)
 
@@ -562,7 +575,10 @@ def train(
 
                 # Re-assign fresh env to model — also resets the rollout buffer
                 model.set_env(env)
-                console.print(f"   VecNormalize stats carried over, clip_obs=20.0")
+
+                # Schedule clip_obs tightening: 20.0 → 10.0 after 20k warmup steps
+                tighten_cb.trigger(current_step=model.num_timesteps)
+                console.print(f"   VecNormalize stats carried over, clip_obs=20.0 → 10.0 after 20k steps")
                 console.print(f"   Rollout buffer reset for clean transition")
             # If stage not complete, loop continues with another budget chunk on same stage
 
