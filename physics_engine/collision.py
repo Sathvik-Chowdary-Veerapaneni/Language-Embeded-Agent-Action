@@ -176,9 +176,16 @@ def compute_reward(
         precision = max(0.0, 1.0 - ratio)
         return 20.0 + 80.0 * (precision ** 2)
 
-    # Miss — exponential decay based on closest approach (v1 formula unchanged)
+    # Miss — exponential decay based on closest approach
+    # v3.2: Widened decay scale from 2*radius to max(2*radius, 5.0).
+    # Old 2*radius decayed too fast for small targets (radius=0.75 → scale=1.5m),
+    # producing near-zero gradient beyond a few meters. Early training, where
+    # misses are typically 10-30m, got no useful learning signal.
+    # With scale ≥ 5.0m the agent still sees meaningful reward at 10m (~1.35)
+    # while far misses (30m+) still decay toward zero.
     dist = closest_approach if closest_approach is not None else (distance_from_center or 50.0)
-    return 10.0 * np.exp(-dist / (2.0 * max(target_radius, 1e-8)))
+    scale = max(2.0 * max(target_radius, 1e-8), 5.0)
+    return 10.0 * np.exp(-dist / scale)
 
 
 def move_targets(
@@ -307,12 +314,12 @@ if __name__ == "__main__":
     # Edge graze: d=1.0 → precision=0.0 → 20 + 80*0 = 20
     edge = compute_reward(True, 1.0, r)
     assert edge == 20.0, f"Edge graze failed: {edge}"
-    # Near miss: closest_approach = 2.0, radius = 1.0 → 10*exp(-2/2) ≈ 3.68
+    # Near miss: closest_approach = 2.0, radius = 1.0 → 10*exp(-2/5) ≈ 6.70 (scale=max(2,5)=5)
     near_miss = compute_reward(False, None, r, closest_approach=2.0)
-    assert near_miss > 3.0, f"Near miss should be ~3.68, got {near_miss}"
-    # Far miss: closest_approach = 30.0 → 10*exp(-30/2) ≈ 0.0
+    assert near_miss > 5.0, f"Near miss should be ~6.70, got {near_miss}"
+    # Far miss: closest_approach = 30.0 → 10*exp(-30/5) ≈ 0.025
     far_miss = compute_reward(False, None, r, closest_approach=30.0)
-    assert far_miss < 0.01, f"Far miss should be ~0, got {far_miss}"
+    assert far_miss < 0.05, f"Far miss should be ~0.025, got {far_miss}"
     console.print(f"  ✅ Dead center (0.0/1.0) → {bullseye}")
     console.print(f"  ✅ Halfway (0.5/1.0) → {halfway}")
     console.print(f"  ✅ Edge graze (1.0/1.0) → {edge}")

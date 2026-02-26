@@ -52,16 +52,6 @@ DEFAULT_STAGE_CONFIG = {
     "target_radius": 2.0,
 }
 
-# Target radius by curriculum stage type
-TARGET_RADIUS_MAP = {
-    "static_close": 0.5,
-    "static_far": 0.75,
-    "moving_slow": 1.0,
-    "wind": 1.0,
-    "full_dynamic": 1.0,
-}
-
-
 class ArcheryEnv(gym.Env):
     """Single-target archery environment.
 

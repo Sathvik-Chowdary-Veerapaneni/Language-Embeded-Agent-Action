@@ -186,12 +186,14 @@ class TestRewardZones:
     def test_miss_reward_near(self):
         """Near miss should give small positive reward."""
         reward = compute_reward(False, None, 1.0, closest_approach=2.0)
-        assert 2.0 < reward < 5.0, f"Near miss reward: {reward}"
+        # v3.2: wider decay scale (max(2*1, 5)=5) → 10*exp(-2/5) ≈ 6.70
+        assert 5.0 < reward < 8.0, f"Near miss reward: {reward}"
 
     def test_miss_reward_far(self):
         """Far miss should give near-zero reward."""
         reward = compute_reward(False, None, 1.0, closest_approach=30.0)
-        assert reward < 0.01, f"Far miss should be ~0, got {reward}"
+        # v3.2: 10*exp(-30/5) ≈ 0.025
+        assert reward < 0.05, f"Far miss should be ~0, got {reward}"
 
     def test_miss_reward_decreases_with_distance(self):
         """Miss reward should decrease as distance increases."""
