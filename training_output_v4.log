@@ -17586,10 +17586,593 @@ Logging to /Users/sathvikchowdaryveerapaneni/Desktop/gig_projects/AI_Projects/LE
 |    ent_coef_scheduled   | 0.0114       |
 |    entropy_loss         | 4.67         |
 |    explained_variance   | -0.0267      |
-|    learning_rate        | 1e-05        |
-|    loss                 | 0.0697       |
-|    n_updates            | 4771         |
-|    policy_gradient_loss | 0.000936     |
-|    std                  | 0.635        |
-|    value_loss           | 0.0575       |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10169800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10169800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.016        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 2.44         |
+| time/                   |              |
+|    fps                  | 174          |
+|    iterations           | 43           |
+|    time_elapsed         | 4047         |
+|    total_timesteps      | 18760696     |
+| train/                  |              |
+|    approx_kl            | 0.014699349  |
+|    clip_fraction        | 0.27         |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0114       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0101       |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10186200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10186200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.008        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 2.84         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 44           |
+|    time_elapsed         | 4146         |
+|    total_timesteps      | 18777080     |
+| train/                  |              |
+|    approx_kl            | 0.013674816  |
+|    clip_fraction        | 0.254        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0113       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0244       |
+|    learning_rate        | 1e-05          💾 Checkpoint saved: full_dynamic_step_18790792.zip (success: 1.7%)
 ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10202600     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10202600     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.02         |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.45         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 45           |
+|    time_elapsed         | 4247         |
+|    total_timesteps      | 18793464     |
+| train/                  |              |
+|    approx_kl            | 0.012578946  |
+|    clip_fraction        | 0.251        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0113       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | -0.0178      |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10219000     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10219000     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.014        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 2.91         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 46           |
+|    time_elapsed         | 4344         |
+|    total_timesteps      | 18809848     |
+| train/                  |              |
+|    approx_kl            | 0.014899039  |
+|    clip_fraction        | 0.264        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0113       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0318       |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10235400     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10235400     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.013        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.54         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 47           |
+|    time_elapsed         | 4437         |
+|    total_timesteps      | 18826232     |
+| train/                  |              |
+|    approx_kl            | 0.013037335  |
+|    clip_fraction        | 0.257        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0112       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0217       |
+|    learning_rate        | 1e-05          💾 Checkpoint saved: full_dynamic_step_18840792.zip (success: 0.9%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10251800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10251800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.015        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.65         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 48           |
+|    time_elapsed         | 4531         |
+|    total_timesteps      | 18842616     |
+| train/                  |              |
+|    approx_kl            | 0.011494469  |
+|    clip_fraction        | 0.27         |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0112       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0502       |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10268200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10268200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.012        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.01         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 49           |
+|    time_elapsed         | 4623         |
+|    total_timesteps      | 18859000     |
+| train/                  |              |
+|    approx_kl            | 0.0141545795 |
+|    clip_fraction        | 0.273        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0112       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0765       |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10284600     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10284600     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.011        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.95         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 50           |
+|    time_elapsed         | 4717         |
+|    total_timesteps      | 18875384     |
+| train/                  |              |
+|    approx_kl            | 0.015958266  |
+|    clip_fraction        | 0.261        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0111       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0613       |
+|    learning_rate        | 1e-05          💾 Checkpoint saved: full_dynamic_step_18890792.zip (success: 1.8%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10300800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10300800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.015        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.05         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 51           |
+|    time_elapsed         | 4816         |
+|    total_timesteps      | 18891768     |
+| train/                  |              |
+|    approx_kl            | 0.012560951  |
+|    clip_fraction        | 0.259        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0111       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.121        |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10317200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10317200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.016        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.96         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 52           |
+|    time_elapsed         | 4911         |
+|    total_timesteps      | 18908152     |
+| train/                  |              |
+|    approx_kl            | 0.01569913   |
+|    clip_fraction        | 0.271        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0111       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0821       |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10333600     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10333600     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.007        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 2.58         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 53           |
+|    time_elapsed         | 5007         |
+|    total_timesteps      | 18924536     |
+| train/                  |              |
+|    approx_kl            | 0.013335864  |
+|    clip_fraction        | 0.266        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0111       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0965       |
+|    learning_rate        | 1e-05          💾 Checkpoint saved: full_dynamic_step_18940792.zip (success: 2.1%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10350000     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10350000     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.02         |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.86         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 54           |
+|    time_elapsed         | 5102         |
+|    total_timesteps      | 18940920     |
+| train/                  |              |
+|    approx_kl            | 0.0132796485 |
+|    clip_fraction        | 0.263        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.011        |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.107        |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10366400     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10366400     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.023        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.18         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 55           |
+|    time_elapsed         | 5202         |
+|    total_timesteps      | 18957304     |
+| train/                  |              |
+|    approx_kl            | 0.013622263  |
+|    clip_fraction        | 0.268        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.011        |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.0857       |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10382800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10382800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.021        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.59         |
+| time/                   |              |
+|    fps                  | 173          |
+|    iterations           | 56           |
+|    time_elapsed         | 5298         |
+|    total_timesteps      | 18973688     |
+| train/                  |              |
+|    approx_kl            | 0.013328072  |
+|    clip_fraction        | 0.275        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.011        |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.118        |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10399200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10399200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.013        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.18         |
+| time/                   |              |
+|    fps                  | 172          |
+|    iterations           | 57           |
+|    time_elapsed         | 5400         |
+|    total_timesteps      | 18990072     |
+| train/                  |              |
+|    approx_kl            | 0.0154973455 |
+|    clip_fraction        | 0.266        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0109       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.137        |
+|    learning_rate        | 1e-05          💾 Checkpoint saved: full_dynamic_step_18990792.zip (success: 1.8%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10415600     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10415600     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.02         |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.19         |
+| time/                   |              |
+|    fps                  | 172          |
+|    iterations           | 58           |
+|    time_elapsed         | 5500         |
+|    total_timesteps      | 19006456     |
+| train/                  |              |
+|    approx_kl            | 0.0162213    |
+|    clip_fraction        | 0.268        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0109       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.121        |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10432000     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10432000     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.013        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.2          |
+| time/                   |              |
+|    fps                  | 172          |
+|    iterations           | 59           |
+|    time_elapsed         | 5598         |
+|    total_timesteps      | 19022840     |
+| train/                  |              |
+|    approx_kl            | 0.014544003  |
+|    clip_fraction        | 0.296        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0109       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.156        |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10448400     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10448400     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.013        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.07         |
+| time/                   |              |
+|    fps                  | 172          |
+|    iterations           | 60           |
+|    time_elapsed         | 5692         |
+|    total_timesteps      | 19039224     |
+| train/                  |              |
+|    approx_kl            | 0.013756867  |
+|    clip_fraction        | 0.272        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0108       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.13         |
+|    learning_rate        | 1e-05          💾 Checkpoint saved: full_dynamic_step_19040792.zip (success: 1.4%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10464800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10464800     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.011        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 2.85         |
+| time/                   |              |
+|    fps                  | 172          |
+|    iterations           | 61           |
+|    time_elapsed         | 5796         |
+|    total_timesteps      | 19055608     |
+| train/                  |              |
+|    approx_kl            | 0.014229637  |
+|    clip_fraction        | 0.258        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0108       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.163        |
+|    learning_rate        | 1e-05        ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10481200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 10481200     |
+|    stage                | 6            |
+|    stage_name           | full_dynamic |
+|    success_rate         | 0.017        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 2.54         |
+| time/                   |              |
+|    fps                  | 172          |
+|    iterations           | 62           |
+|    time_elapsed         | 5891         |
+|    total_timesteps      | 19071992     |
+| train/                  |              |
+|    approx_kl            | 0.012896472  |
+|    clip_fraction        | 0.27         |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0108       |
+|    entropy_loss         | 4.67         |
+|    explained_variance   | 0.151        |
+|    learning_rate        | 1e-05         100% ━━━━━━━━━━━━━━━━━━━━ 1,015,808/1,000,000  [ 1:36:40 < 0:00:00 , 170 it/s ]
+
+═══ Training Summary ═══
+  Time: 59704s (995.1min)
+  Episodes: 10,481,208
+  Timesteps used: 12,000,000 / 12,000,000
+  Final stage: 6 (full_dynamic)
+  Final success rate: 1.7%
+  Model saved: 
+/Users/sathvikchowdaryveerapaneni/Desktop/gig_projects/AI_Projects/LEAA/rl_train
+ing/checkpoints/final_stage6.zip
+1min)
+  Episodes: 10,481,208
+  Timesteps used: 12,000,000 / 12,000,000
+  Final stage: 6 (full_dynamic)
+  Final success rate: 1.7%
+  Model saved: 
+/Users/sathvikchowdaryveerapaneni/Desktop/gig_projects/AI_Projects/LEAA/rl_train
+ing/checkpoints/final_stage6.zip
+
+==============================
+ v4 training complete
+ Fri Mar  6 18:30:56 EST 2026
+==============================
