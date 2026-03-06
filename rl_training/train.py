@@ -268,8 +268,13 @@ class KLSafetyCallback(BaseCallback):
         if kl > self.kl_threshold:
             self.consecutive_high += 1
             if self.consecutive_high >= self.consecutive_limit and not self.lr_halved:
+                current_lr = self.model.policy.optimizer.param_groups[0]['lr']
+                new_lr = current_lr * 0.5
+                # Must update lr_schedule — PPO.train() calls update_learning_rate(optimizer, lr_schedule(progress))
+                # which overrides param_group['lr'] unless we also update the schedule itself.
+                self.model.lr_schedule = lambda _: new_lr
                 for param_group in self.model.policy.optimizer.param_groups:
-                    param_group['lr'] *= 0.5
+                    param_group['lr'] = new_lr
                 self.lr_halved = True
                 console.print(
                     f"\n[bold yellow]⚠️  KL safety triggered: approx_kl={kl:.4f} "
@@ -398,20 +403,23 @@ def train(
                                clip_obs=15.0, clip_reward=10.0)
 
         model = PPO.load(resume_path, env=env, device=device)
+        model.target_kl = None  # Clear any saved target_kl — prevents "Early stopping at step 0"
 
         # Override with conservative fine-tuning hyperparams when using --start-stage.
         # These prevent destroying the static policy that already works well.
         if is_fine_tune:
-            model.learning_rate = lambda _: 1e-4   # Fixed — no schedule, stable fine-tuning
-            model.batch_size = 256                  # Smaller = gentler updates
-            model.n_epochs = 3                      # Was 5 — prevents clip_fraction spike (v3: 34%)
-            model.ent_coef = 0.03                   # Start lower — policy already has structure
-            model.clip_range = lambda _: 0.15       # Tighter leash — prevents positive policy_gradient_loss
-            # Sync optimizer LR immediately
+            # SB3 uses lr_schedule / clip_range_schedule internally — setting learning_rate/clip_range
+            # attributes does NOT affect PPO.train() which calls self.lr_schedule(progress).
+            model.lr_schedule = lambda _: 1e-5          # fixes the internal schedule PPO.train() reads
+            model.batch_size = 256                      # Smaller = gentler updates
+            model.n_epochs = 5                          # More epochs now that LR is safe
+            model.ent_coef = 0.03                       # Start lower — policy already has structure
+            model.clip_range_schedule = lambda _: 0.15  # fixes the internal schedule PPO.train() reads
+            # Sync optimizer LR immediately (lr_schedule handles future updates in PPO.train())
             for param_group in model.policy.optimizer.param_groups:
-                param_group['lr'] = 1e-4
+                param_group['lr'] = 1e-5
             console.print(f"  [bold]Fine-tuning hyperparams (resume mode):[/bold]")
-            console.print(f"    lr=1e-4 (fixed), batch_size=256, n_epochs=3, ent_coef=0.03, clip_range=0.15")
+            console.print(f"    lr_schedule=1e-5 (fixed), batch_size=256, n_epochs=5, ent_coef=0.03, clip_range_schedule=0.15")
 
     else:
         env = VecNormalize(base_vec_env, norm_obs=True, norm_reward=True,
@@ -536,12 +544,12 @@ def train(
             )
             model.set_logger(stage_logger)
 
-            # Bug 2 fix: re-assert fixed LR before every learn() call in fine-tune mode.
-            # PPO.load() restores the old v3 schedule; even after setting model.learning_rate,
-            # the optimizer param groups retain the old value until explicitly synced.
+            # Re-assert lr_schedule + optimizer LR at each stage start (clean slate after stage transitions).
+            # lr_schedule is what PPO.train() actually reads via update_learning_rate().
             if is_fine_tune:
+                model.lr_schedule = lambda _: 1e-5
                 for param_group in model.policy.optimizer.param_groups:
-                    param_group['lr'] = 1e-4
+                    param_group['lr'] = 1e-5
 
             model.learn(
                 total_timesteps=stage_budget,
@@ -562,6 +570,9 @@ def train(
                 # Advance callback state
                 curriculum_cb.advance_stage()
                 stage_budget_idx += 1
+                # Reset KL safety so each stage is independently protected
+                kl_safety_cb.consecutive_high = 0
+                kl_safety_cb.lr_halved = False
                 new_cfg = curriculum_cb.current_stage_config
 
                 # Close old env and create fresh env for new stage
