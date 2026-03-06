@@ -9916,10 +9916,1879 @@ Logging to /Users/sathvikchowdaryveerapaneni/Desktop/gig_projects/AI_Projects/LE
 |    ent_coef_scheduled   | 0.0195      |
 |    entropy_loss         | 3.88        |
 |    explained_variance   | 0.506       |
-|    learning_rate        | 1e-05       |
-|    loss                 | 0.235       |
-|    n_updates            | 3416        |
-|    policy_gradient_loss | 3.58e-05    |
-|    std                  | 0.723       |
-|    value_loss           | 0.243       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5725800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5725800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.145       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.05        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 177         |
+|    time_elapsed         | 17212       |
+|    total_timesteps      | 14316704    |
+| train/                  |             |
+|    approx_kl            | 0.010338973 |
+|    clip_fraction        | 0.209       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0195      |
+|    entropy_loss         | 3.88        |
+|    explained_variance   | 0.522       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5742200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5742200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.127       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.02        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 178         |
+|    time_elapsed         | 17317       |
+|    total_timesteps      | 14333088    |
+| train/                  |             |
+|    approx_kl            | 0.009024673 |
+|    clip_fraction        | 0.195       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0195      |
+|    entropy_loss         | 3.88        |
+|    explained_variance   | 0.505       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14340792.zip (success: 11.5%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 5758600      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 5758600      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+|    success_rate         | 0.121        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 8.4          |
+| time/                   |              |
+|    fps                  | 168          |
+|    iterations           | 179          |
+|    time_elapsed         | 17418        |
+|    total_timesteps      | 14349472     |
+| train/                  |              |
+|    approx_kl            | 0.0111719305 |
+|    clip_fraction        | 0.218        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0194       |
+|    entropy_loss         | 3.89         |
+|    explained_variance   | 0.503        |
+|    learning_rate        | 1e-05        -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5775000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5775000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.123       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 7.71        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 180         |
+|    time_elapsed         | 17519       |
+|    total_timesteps      | 14365856    |
+| train/                  |             |
+|    approx_kl            | 0.009861199 |
+|    clip_fraction        | 0.211       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0194      |
+|    entropy_loss         | 3.89        |
+|    explained_variance   | 0.51        |
+|    learning_rate        | 1e-05 ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 5791400      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 5791400      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+|    success_rate         | 0.124        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 6.82         |
+| time/                   |              |
+|    fps                  | 168          |
+|    iterations           | 181          |
+|    time_elapsed         | 17620        |
+|    total_timesteps      | 14382240     |
+| train/                  |              |
+|    approx_kl            | 0.0085396785 |
+|    clip_fraction        | 0.207        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0194       |
+|    entropy_loss         | 3.89         |
+|    explained_variance   | 0.509        |
+|    learning_rate        | 1e-05          💾 Checkpoint saved: wind_step_14390792.zip (success: 13.0%)
 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5807800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5807800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.138       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.41        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 182         |
+|    time_elapsed         | 17722       |
+|    total_timesteps      | 14398624    |
+| train/                  |             |
+|    approx_kl            | 0.008665936 |
+|    clip_fraction        | 0.199       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0194      |
+|    entropy_loss         | 3.89        |
+|    explained_variance   | 0.506       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5824200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5824200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.125       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 11.4        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 183         |
+|    time_elapsed         | 17823       |
+|    total_timesteps      | 14415008    |
+| train/                  |             |
+|    approx_kl            | 0.009888396 |
+|    clip_fraction        | 0.178       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0193      |
+|    entropy_loss         | 3.9         |
+|    explained_variance   | 0.513       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5840600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5840600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.134       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.19        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 184         |
+|    time_elapsed         | 17925       |
+|    total_timesteps      | 14431392    |
+| train/                  |             |
+|    approx_kl            | 0.010131828 |
+|    clip_fraction        | 0.212       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0193      |
+|    entropy_loss         | 3.9         |
+|    explained_variance   | 0.512       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14440792.zip (success: 15.0%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5856800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5856800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.149       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.23        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 185         |
+|    time_elapsed         | 18027       |
+|    total_timesteps      | 14447776    |
+| train/                  |             |
+|    approx_kl            | 0.009304164 |
+|    clip_fraction        | 0.193       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0193      |
+|    entropy_loss         | 3.9         |
+|    explained_variance   | 0.527       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5873200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5873200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.138       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.59        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 186         |
+|    time_elapsed         | 18127       |
+|    total_timesteps      | 14464160    |
+| train/                  |             |
+|    approx_kl            | 0.010970859 |
+|    clip_fraction        | 0.198       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0192      |
+|    entropy_loss         | 3.9         |
+|    explained_variance   | 0.518       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5889600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5889600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.115       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 6.94        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 187         |
+|    time_elapsed         | 18228       |
+|    total_timesteps      | 14480544    |
+| train/                  |             |
+|    approx_kl            | 0.011245789 |
+|    clip_fraction        | 0.214       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0192      |
+|    entropy_loss         | 3.91        |
+|    explained_variance   | 0.524       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14490792.zip (success: 14.4%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5906000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5906000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.134       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.22        |
+| time/                   |             |
+|    fps                  | 168         |
+|    iterations           | 188         |
+|    time_elapsed         | 18328       |
+|    total_timesteps      | 14496928    |
+| train/                  |             |
+|    approx_kl            | 0.008921916 |
+|    clip_fraction        | 0.201       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0192      |
+|    entropy_loss         | 3.91        |
+|    explained_variance   | 0.521       |
+|    learning_rate        | 1e-05 ----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 5922400    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 5922400    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.149      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 8.85       |
+| time/                   |            |
+|    fps                  | 168        |
+|    iterations           | 189        |
+|    time_elapsed         | 18430      |
+|    total_timesteps      | 14513312   |
+| train/                  |            |
+|    approx_kl            | 0.00818961 |
+|    clip_fraction        | 0.202      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0191     |
+|    entropy_loss         | 3.91       |
+|    explained_variance   | 0.528      |
+|    learning_rate        |----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 5938800    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 5938800    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.148      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 9.49       |
+| time/                   |            |
+|    fps                  | 167        |
+|    iterations           | 190        |
+|    time_elapsed         | 18530      |
+|    total_timesteps      | 14529696   |
+| train/                  |            |
+|    approx_kl            | 0.00883703 |
+|    clip_fraction        | 0.2        |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0191     |
+|    entropy_loss         | 3.91       |
+|    explained_variance   | 0.526      |
+|    learning_rate        |  💾 Checkpoint saved: wind_step_14540792.zip (success: 12.3%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5955200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5955200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.142       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 6.51        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 191         |
+|    time_elapsed         | 18633       |
+|    total_timesteps      | 14546080    |
+| train/                  |             |
+|    approx_kl            | 0.011170778 |
+|    clip_fraction        | 0.207       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0191      |
+|    entropy_loss         | 3.92        |
+|    explained_variance   | 0.531       |
+|    learning_rate        | 1e-05 ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 5971600      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 5971600      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+|    success_rate         | 0.149        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 7.86         |
+| time/                   |              |
+|    fps                  | 167          |
+|    iterations           | 192          |
+|    time_elapsed         | 18736        |
+|    total_timesteps      | 14562464     |
+| train/                  |              |
+|    approx_kl            | 0.0107951965 |
+|    clip_fraction        | 0.205        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0191       |
+|    entropy_loss         | 3.92         |
+|    explained_variance   | 0.529        |
+|    learning_rate        | 1e-05        -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5988000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 5988000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.145       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.08        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 193         |
+|    time_elapsed         | 18837       |
+|    total_timesteps      | 14578848    |
+| train/                  |             |
+|    approx_kl            | 0.011017529 |
+|    clip_fraction        | 0.224       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.019       |
+|    entropy_loss         | 3.92        |
+|    explained_variance   | 0.525       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14590792.zip (success: 15.6%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6004400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6004400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.156       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 6.75        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 194         |
+|    time_elapsed         | 18939       |
+|    total_timesteps      | 14595232    |
+| train/                  |             |
+|    approx_kl            | 0.010102333 |
+|    clip_fraction        | 0.197       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.019       |
+|    entropy_loss         | 3.92        |
+|    explained_variance   | 0.53        |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6020800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6020800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.139       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.33        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 195         |
+|    time_elapsed         | 19040       |
+|    total_timesteps      | 14611616    |
+| train/                  |             |
+|    approx_kl            | 0.008952346 |
+|    clip_fraction        | 0.198       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.019       |
+|    entropy_loss         | 3.93        |
+|    explained_variance   | 0.534       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6037200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6037200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.147       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 11          |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 196         |
+|    time_elapsed         | 19141       |
+|    total_timesteps      | 14628000    |
+| train/                  |             |
+|    approx_kl            | 0.009136344 |
+|    clip_fraction        | 0.192       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0189      |
+|    entropy_loss         | 3.93        |
+|    explained_variance   | 0.53        |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14640792.zip (success: 15.9%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6053600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6053600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.158       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 11.5        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 197         |
+|    time_elapsed         | 19242       |
+|    total_timesteps      | 14644384    |
+| train/                  |             |
+|    approx_kl            | 0.012114237 |
+|    clip_fraction        | 0.216       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0189      |
+|    entropy_loss         | 3.93        |
+|    explained_variance   | 0.539       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6069800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6069800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.158       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 6.07        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 198         |
+|    time_elapsed         | 19344       |
+|    total_timesteps      | 14660768    |
+| train/                  |             |
+|    approx_kl            | 0.010084938 |
+|    clip_fraction        | 0.203       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0189      |
+|    entropy_loss         | 3.94        |
+|    explained_variance   | 0.528       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6086200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6086200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.148       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 7.43        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 199         |
+|    time_elapsed         | 19445       |
+|    total_timesteps      | 14677152    |
+| train/                  |             |
+|    approx_kl            | 0.010985999 |
+|    clip_fraction        | 0.219       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0188      |
+|    entropy_loss         | 3.94        |
+|    explained_variance   | 0.542       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14690792.zip (success: 15.8%)
+----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6102600    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6102600    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.132      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 10.7       |
+| time/                   |            |
+|    fps                  | 167        |
+|    iterations           | 200        |
+|    time_elapsed         | 19547      |
+|    total_timesteps      | 14693536   |
+| train/                  |            |
+|    approx_kl            | 0.01013146 |
+|    clip_fraction        | 0.208      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0188     |
+|    entropy_loss         | 3.94       |
+|    explained_variance   | 0.539      |
+|    learning_rate        |-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6119000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6119000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.128       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.07        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 201         |
+|    time_elapsed         | 19648       |
+|    total_timesteps      | 14709920    |
+| train/                  |             |
+|    approx_kl            | 0.010507269 |
+|    clip_fraction        | 0.196       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0188      |
+|    entropy_loss         | 3.95        |
+|    explained_variance   | 0.534       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6135400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6135400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.141       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.38        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 202         |
+|    time_elapsed         | 19749       |
+|    total_timesteps      | 14726304    |
+| train/                  |             |
+|    approx_kl            | 0.010229735 |
+|    clip_fraction        | 0.206       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0188      |
+|    entropy_loss         | 3.95        |
+|    explained_variance   | 0.533       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14740792.zip (success: 13.3%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6151800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6151800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.147       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 11.4        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 203         |
+|    time_elapsed         | 19851       |
+|    total_timesteps      | 14742688    |
+| train/                  |             |
+|    approx_kl            | 0.010420246 |
+|    clip_fraction        | 0.207       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0187      |
+|    entropy_loss         | 3.95        |
+|    explained_variance   | 0.544       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6168200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6168200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.157       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 6.69        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 204         |
+|    time_elapsed         | 19952       |
+|    total_timesteps      | 14759072    |
+| train/                  |             |
+|    approx_kl            | 0.010532103 |
+|    clip_fraction        | 0.212       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0187      |
+|    entropy_loss         | 3.95        |
+|    explained_variance   | 0.527       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6184600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6184600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.155       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.65        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 205         |
+|    time_elapsed         | 20052       |
+|    total_timesteps      | 14775456    |
+| train/                  |             |
+|    approx_kl            | 0.009762495 |
+|    clip_fraction        | 0.203       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0187      |
+|    entropy_loss         | 3.96        |
+|    explained_variance   | 0.529       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14790792.zip (success: 15.8%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6201000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6201000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.15        |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.65        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 206         |
+|    time_elapsed         | 20153       |
+|    total_timesteps      | 14791840    |
+| train/                  |             |
+|    approx_kl            | 0.011687257 |
+|    clip_fraction        | 0.207       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0186      |
+|    entropy_loss         | 3.96        |
+|    explained_variance   | 0.539       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6217400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6217400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.169       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.92        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 207         |
+|    time_elapsed         | 20254       |
+|    total_timesteps      | 14808224    |
+| train/                  |             |
+|    approx_kl            | 0.008256753 |
+|    clip_fraction        | 0.201       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0186      |
+|    entropy_loss         | 3.96        |
+|    explained_variance   | 0.549       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6233800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6233800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.143       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 7.1         |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 208         |
+|    time_elapsed         | 20355       |
+|    total_timesteps      | 14824608    |
+| train/                  |             |
+|    approx_kl            | 0.008718273 |
+|    clip_fraction        | 0.2         |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0186      |
+|    entropy_loss         | 3.96        |
+|    explained_variance   | 0.544       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14840792.zip (success: 12.2%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6250200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6250200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.122       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 10          |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 209         |
+|    time_elapsed         | 20457       |
+|    total_timesteps      | 14840992    |
+| train/                  |             |
+|    approx_kl            | 0.008670176 |
+|    clip_fraction        | 0.197       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0185      |
+|    entropy_loss         | 3.97        |
+|    explained_variance   | 0.544       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6266400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6266400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.141       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 7.12        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 210         |
+|    time_elapsed         | 20559       |
+|    total_timesteps      | 14857376    |
+| train/                  |             |
+|    approx_kl            | 0.009668779 |
+|    clip_fraction        | 0.21        |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0185      |
+|    entropy_loss         | 3.97        |
+|    explained_variance   | 0.534       |
+|    learning_rate        | 1e-05 ----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6282800    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6282800    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.18       |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 8.57       |
+| time/                   |            |
+|    fps                  | 167        |
+|    iterations           | 211        |
+|    time_elapsed         | 20659      |
+|    total_timesteps      | 14873760   |
+| train/                  |            |
+|    approx_kl            | 0.01018193 |
+|    clip_fraction        | 0.208      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0185     |
+|    entropy_loss         | 3.97       |
+|    explained_variance   | 0.53       |
+|    learning_rate        |-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6299200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6299200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.186       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.07        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 212         |
+|    time_elapsed         | 20760       |
+|    total_timesteps      | 14890144    |
+| train/                  |             |
+|    approx_kl            | 0.009251786 |
+|    clip_fraction        | 0.213       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0185      |
+|    entropy_loss         | 3.98        |
+|    explained_variance   | 0.541       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14890792.zip (success: 15.5%)
+----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6315600    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6315600    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.163      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 8.57       |
+| time/                   |            |
+|    fps                  | 167        |
+|    iterations           | 213        |
+|    time_elapsed         | 20862      |
+|    total_timesteps      | 14906528   |
+| train/                  |            |
+|    approx_kl            | 0.01100186 |
+|    clip_fraction        | 0.216      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0184     |
+|    entropy_loss         | 3.98       |
+|    explained_variance   | 0.546      |
+|    learning_rate        |-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6332000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6332000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.175       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 10.2        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 214         |
+|    time_elapsed         | 20963       |
+|    total_timesteps      | 14922912    |
+| train/                  |             |
+|    approx_kl            | 0.009548689 |
+|    clip_fraction        | 0.202       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0184      |
+|    entropy_loss         | 3.98        |
+|    explained_variance   | 0.539       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6348400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6348400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.166       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 6.96        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 215         |
+|    time_elapsed         | 21064       |
+|    total_timesteps      | 14939296    |
+| train/                  |             |
+|    approx_kl            | 0.009304099 |
+|    clip_fraction        | 0.199       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0184      |
+|    entropy_loss         | 3.99        |
+|    explained_variance   | 0.535       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14940792.zip (success: 14.6%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6364800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6364800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.156       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 14.1        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 216         |
+|    time_elapsed         | 21167       |
+|    total_timesteps      | 14955680    |
+| train/                  |             |
+|    approx_kl            | 0.009096918 |
+|    clip_fraction        | 0.192       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0183      |
+|    entropy_loss         | 3.99        |
+|    explained_variance   | 0.557       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6381200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6381200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.171       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 7.18        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 217         |
+|    time_elapsed         | 21267       |
+|    total_timesteps      | 14972064    |
+| train/                  |             |
+|    approx_kl            | 0.009089889 |
+|    clip_fraction        | 0.197       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0183      |
+|    entropy_loss         | 3.99        |
+|    explained_variance   | 0.548       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6397600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6397600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.171       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.16        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 218         |
+|    time_elapsed         | 21367       |
+|    total_timesteps      | 14988448    |
+| train/                  |             |
+|    approx_kl            | 0.010199111 |
+|    clip_fraction        | 0.211       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0183      |
+|    entropy_loss         | 4           |
+|    explained_variance   | 0.547       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_14990792.zip (success: 16.6%)
+----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6414000    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6414000    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.164      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 9.43       |
+| time/                   |            |
+|    fps                  | 167        |
+|    iterations           | 219        |
+|    time_elapsed         | 21468      |
+|    total_timesteps      | 15004832   |
+| train/                  |            |
+|    approx_kl            | 0.01046941 |
+|    clip_fraction        | 0.201      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0182     |
+|    entropy_loss         | 4          |
+|    explained_variance   | 0.547      |
+|    learning_rate        |-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6430400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6430400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.179       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.71        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 220         |
+|    time_elapsed         | 21569       |
+|    total_timesteps      | 15021216    |
+| train/                  |             |
+|    approx_kl            | 0.011351876 |
+|    clip_fraction        | 0.196       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0182      |
+|    entropy_loss         | 4           |
+|    explained_variance   | 0.562       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6446800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6446800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.173       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 6.26        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 221         |
+|    time_elapsed         | 21669       |
+|    total_timesteps      | 15037600    |
+| train/                  |             |
+|    approx_kl            | 0.010558474 |
+|    clip_fraction        | 0.214       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0182      |
+|    entropy_loss         | 4.01        |
+|    explained_variance   | 0.562       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_15040792.zip (success: 16.2%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 6463200      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 6463200      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+|    success_rate         | 0.158        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 9.95         |
+| time/                   |              |
+|    fps                  | 167          |
+|    iterations           | 222          |
+|    time_elapsed         | 21769        |
+|    total_timesteps      | 15053984     |
+| train/                  |              |
+|    approx_kl            | 0.0092272125 |
+|    clip_fraction        | 0.196        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0182       |
+|    entropy_loss         | 4.01         |
+|    explained_variance   | 0.562        |
+|    learning_rate        | 1e-05        ----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6479400    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6479400    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.173      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 7.25       |
+| time/                   |            |
+|    fps                  | 167        |
+|    iterations           | 223        |
+|    time_elapsed         | 21869      |
+|    total_timesteps      | 15070368   |
+| train/                  |            |
+|    approx_kl            | 0.01137658 |
+|    clip_fraction        | 0.219      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0181     |
+|    entropy_loss         | 4.01       |
+|    explained_variance   | 0.547      |
+|    learning_rate        |-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6495800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6495800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.158       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.69        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 224         |
+|    time_elapsed         | 21969       |
+|    total_timesteps      | 15086752    |
+| train/                  |             |
+|    approx_kl            | 0.009731959 |
+|    clip_fraction        | 0.196       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0181      |
+|    entropy_loss         | 4.02        |
+|    explained_variance   | 0.547       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_15090792.zip (success: 15.4%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6512200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6512200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.172       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 7.55        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 225         |
+|    time_elapsed         | 22069       |
+|    total_timesteps      | 15103136    |
+| train/                  |             |
+|    approx_kl            | 0.009687692 |
+|    clip_fraction        | 0.195       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0181      |
+|    entropy_loss         | 4.02        |
+|    explained_variance   | 0.569       |
+|    learning_rate        | 1e-05 ----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6528600    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6528600    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.184      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 10.7       |
+| time/                   |            |
+|    fps                  | 167        |
+|    iterations           | 226        |
+|    time_elapsed         | 22170      |
+|    total_timesteps      | 15119520   |
+| train/                  |            |
+|    approx_kl            | 0.01003468 |
+|    clip_fraction        | 0.199      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.018      |
+|    entropy_loss         | 4.02       |
+|    explained_variance   | 0.563      |
+|    learning_rate        |-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6545000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6545000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.177       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.78        |
+| time/                   |             |
+|    fps                  | 167         |
+|    iterations           | 227         |
+|    time_elapsed         | 22269       |
+|    total_timesteps      | 15135904    |
+| train/                  |             |
+|    approx_kl            | 0.008141551 |
+|    clip_fraction        | 0.196       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.018       |
+|    entropy_loss         | 4.03        |
+|    explained_variance   | 0.562       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_15140792.zip (success: 17.2%)
+----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6561400    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6561400    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.159      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 9.3        |
+| time/                   |            |
+|    fps                  | 166        |
+|    iterations           | 228        |
+|    time_elapsed         | 22369      |
+|    total_timesteps      | 15152288   |
+| train/                  |            |
+|    approx_kl            | 0.01032888 |
+|    clip_fraction        | 0.201      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.018      |
+|    entropy_loss         | 4.03       |
+|    explained_variance   | 0.57       |
+|    learning_rate        |-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6577800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6577800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.163       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.88        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 229         |
+|    time_elapsed         | 22470       |
+|    total_timesteps      | 15168672    |
+| train/                  |             |
+|    approx_kl            | 0.008068869 |
+|    clip_fraction        | 0.192       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0179      |
+|    entropy_loss         | 4.03        |
+|    explained_variance   | 0.558       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6594200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6594200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.141       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.37        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 230         |
+|    time_elapsed         | 22570       |
+|    total_timesteps      | 15185056    |
+| train/                  |             |
+|    approx_kl            | 0.009402929 |
+|    clip_fraction        | 0.202       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0179      |
+|    entropy_loss         | 4.04        |
+|    explained_variance   | 0.563       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_15190792.zip (success: 18.8%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6610600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6610600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.17        |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.24        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 231         |
+|    time_elapsed         | 22671       |
+|    total_timesteps      | 15201440    |
+| train/                  |             |
+|    approx_kl            | 0.009430476 |
+|    clip_fraction        | 0.202       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0179      |
+|    entropy_loss         | 4.04        |
+|    explained_variance   | 0.566       |
+|    learning_rate        | 1e-05 ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 6627000      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+| ------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 6627000      |
+|    stage                | 5            |
+|    stage_name           | wind         |
+|    success_rate         | 0.18         |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 10.5         |
+| time/                   |              |
+|    fps                  | 166          |
+|    iterations           | 232          |
+|    time_elapsed         | 22772        |
+|    total_timesteps      | 15217824     |
+| train/                  |              |
+|    approx_kl            | 0.0105784945 |
+|    clip_fraction        | 0.205        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0179       |
+|    entropy_loss         | 4.04         |
+|    explained_variance   | 0.571        |
+|    learning_rate        | 1e-05        -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6643400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6643400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.185       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 10.8        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 233         |
+|    time_elapsed         | 22872       |
+|    total_timesteps      | 15234208    |
+| train/                  |             |
+|    approx_kl            | 0.010019988 |
+|    clip_fraction        | 0.2         |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0178      |
+|    entropy_loss         | 4.05        |
+|    explained_variance   | 0.565       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_15240792.zip (success: 18.1%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6659800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6659800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.184       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 14.1        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 234         |
+|    time_elapsed         | 22974       |
+|    total_timesteps      | 15250592    |
+| train/                  |             |
+|    approx_kl            | 0.009850769 |
+|    clip_fraction        | 0.199       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0178      |
+|    entropy_loss         | 4.05        |
+|    explained_variance   | 0.567       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6676000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6676000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.179       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 8.14        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 235         |
+|    time_elapsed         | 23074       |
+|    total_timesteps      | 15266976    |
+| train/                  |             |
+|    approx_kl            | 0.009904442 |
+|    clip_fraction        | 0.205       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0178      |
+|    entropy_loss         | 4.05        |
+|    explained_variance   | 0.568       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6692400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6692400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.187       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 7.74        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 236         |
+|    time_elapsed         | 23173       |
+|    total_timesteps      | 15283360    |
+| train/                  |             |
+|    approx_kl            | 0.009377541 |
+|    clip_fraction        | 0.208       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0177      |
+|    entropy_loss         | 4.06        |
+|    explained_variance   | 0.572       |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_15290792.zip (success: 18.1%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6708800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6708800     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.154       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 10.1        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 237         |
+|    time_elapsed         | 23274       |
+|    total_timesteps      | 15299744    |
+| train/                  |             |
+|    approx_kl            | 0.009956885 |
+|    clip_fraction        | 0.22        |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0177      |
+|    entropy_loss         | 4.06        |
+|    explained_variance   | 0.573       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6725200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6725200     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.155       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 11.7        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 238         |
+|    time_elapsed         | 23376       |
+|    total_timesteps      | 15316128    |
+| train/                  |             |
+|    approx_kl            | 0.009142673 |
+|    clip_fraction        | 0.207       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0177      |
+|    entropy_loss         | 4.06        |
+|    explained_variance   | 0.581       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6741600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6741600     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.169       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 10.1        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 239         |
+|    time_elapsed         | 23476       |
+|    total_timesteps      | 15332512    |
+| train/                  |             |
+|    approx_kl            | 0.010877643 |
+|    clip_fraction        | 0.211       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0176      |
+|    entropy_loss         | 4.07        |
+|    explained_variance   | 0.57        |
+|    learning_rate        | 1e-05   💾 Checkpoint saved: wind_step_15340792.zip (success: 19.2%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6758000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6758000     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.16        |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 11.9        |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 240         |
+|    time_elapsed         | 23577       |
+|    total_timesteps      | 15348896    |
+| train/                  |             |
+|    approx_kl            | 0.012168409 |
+|    clip_fraction        | 0.223       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0176      |
+|    entropy_loss         | 4.07        |
+|    explained_variance   | 0.579       |
+|    learning_rate        | 1e-05 -----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6774400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    suc-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 6774400     |
+|    stage                | 5           |
+|    stage_name           | wind        |
+|    success_rate         | 0.178       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.2         |
+| time/                   |             |
+|    fps                  | 166         |
+|    iterations           | 241         |
+|    time_elapsed         | 23678       |
+|    total_timesteps      | 15365280    |
+| train/                  |             |
+|    approx_kl            | 0.011044557 |
+|    clip_fraction        | 0.213       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0176      |
+|    entropy_loss         | 4.07        |
+|    explained_variance   | 0.575       |
+|    learning_rate        | 1e-05 ----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6790800    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_r----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 6790800    |
+|    stage                | 5          |
+|    stage_name           | wind       |
+|    success_rate         | 0.181      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 7.21       |
+| time/                   |            |
+|    fps                  | 166        |
+|    iterations           | 242        |
+|    time_elapsed         | 23784      |
+|    total_timesteps      | 15381664   |
+| train/                  |            |
+|    approx_kl            | 0.01235105 |
+|    clip_fraction        | 0.208      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0176     |
+|    entropy_loss         | 4.08       |
+|    explained_variance   | 0.57       |
+|    learning_rate        | 1e-05      |
+|    loss                 | 0.244      |
+|    n_updates            | 3746       |
+|    policy_gradient_loss | 0.000633   |
+|    std                  | 0.699      |
+|    value_loss           | 0.311      |
+----------------------------------------
