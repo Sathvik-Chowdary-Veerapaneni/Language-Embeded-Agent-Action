@@ -1,0 +1,77 @@
+
+[DEBUG] sys.argv = ['rl_training/train.py', '--device', 'mps', '--num-envs', '8', '--timesteps', '20000000', '--resume', 'rl_training/checkpoints/static_far_best.zip', '--start-stage', '3', '--max-stage', '3']
+
+
+Parsed args:
+  --resume       = rl_training/checkpoints/static_far_best.zip
+  --start-stage  = 3
+  --stage        = 0
+  --device       = mps
+  --num-envs     = 8
+  --timesteps    = 20,000,000
+  effective start stage → 3
+⚠ MPS selected — note: SB3 MlpPolicy is slower on MPS than CPU
+
+═══ LEAA Training ═══
+  Device: mps
+  Parallel envs: 8
+  Total timesteps: 20,000,000
+  Skipping stages 0-2 (already trained): ['static_close', 'static_medium', 
+'static_mid_far']
+  Starting stage: 3 (static_far)
+  Batch size: n_steps(2048) × envs(8) = 16,384 per update
+  Resuming from: rl_training/checkpoints/static_far_best.zip
+  Loaded VecNormalize stats: vecnormalize_static_far_best.pkl
+  VecNormalize: training=True, clip_obs=15.0 (widens for resume transition)
+/Users/sathvikchowdaryveerapaneni/Desktop/gig_projects/AI_Projects/LEAA/.venv/lib/python3.10/site-packages/stable_baselines3/common/on_policy_algorithm.py:150: UserWarning: You are trying to run PPO on the GPU, but it is primarily intended to run on the CPU when not using a CNN policy (you are using ActorCriticPolicy which should be a MlpPolicy). See https://github.com/DLR-RM/stable-baselines3/issues/1245 for more info. You can pass `device='cpu'` or `export CUDA_VISIBLE_DEVICES=` to force using the CPU.Note: The model will train, but the GPU utilization will be poor and the training might take longer than on CPU.
+  warnings.warn(
+  Fine-tuning hyperparams (resume mode):
+    lr_schedule=1e-5 (fixed), batch_size=256, n_epochs=5, ent_coef=0.03, 
+clip_range_schedule=0.15
+Logging to /Users/sathvikchowdaryveerapaneni/Desktop/gig_projects/AI_Projects/LEAA/rl_training/logs/ppo_static_far
+  Policy network: ActorCriticPolicy(
+  (features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (pi_features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (vf_features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (mlp_extractor): MlpExtractor(
+    (policy_net): Sequential(
+      (0): Linear(in_features=22, out_features=256, bias=True)
+      (1): Tanh()
+      (2): Linear(in_features=256, out_features=256, bias=True)
+      (3): Tanh()
+    )
+    (value_net): Sequential(
+      (0): Linear(in_features=22, out_features=256, bias=True)
+      (1): Tanh()
+      (2): Linear(in_features=256, out_features=256, bias=True)
+      (3): Tanh()
+    )
+  )
+  (action_net): Linear(in_features=256, out_features=3, bias=True)
+  (value_net): Linear(in_features=256, out_features=1, bias=True)
+)
+
+  Stage budget allocation (stages 3+, total=20,000,000):
+    stage 3: static_far     :  2,857,142 steps  (weight=2)
+    stage 4: moving_slow    :  4,285,714 steps  (weight=3)
+    stage 5: wind           :  5,714,285 steps  (weight=4)
+    stage 6: full_dynamic   :  7,142,857 steps  (weight=5)
+  TightenVecNormalize: clip_obs=15.0 → 10.0 after 20k steps
+  Active callbacks: CurriculumCallback, EntropyCoefficientSchedule, 
+KLSafetyCallback, TightenVecNormalize
+
+Starting training...
+  Stage budgets: ['2,857,142', '4,285,714', '5,714,285', '7,142,857']
+
+
+── Stage 3: static_far (budget: 2,857,142 steps, remaining: 20,000,000) ──
+Logging to /Users/sathvikchowdaryveerapaneni/Desktop/gig_projects/AI_Projects/LEAA/rl_training/logs/ppo_static_far
+  💾 Checkpoint saved: static_far_step_5257288.zip (success: 0.0%)
+
+📐 VecNormalize clip_obs tightened to 10.0
