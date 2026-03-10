@@ -56,6 +56,13 @@ def load_curriculum(config_path: Path = None) -> list:
 
 def get_device(requested: str = "cpu") -> str:
     """Determine best available device."""
+    if requested == "cuda":
+        if torch.cuda.is_available():
+            console.print("[green]✓ CUDA GPU detected[/green]")
+            return "cuda"
+        else:
+            console.print("[yellow]⚠ CUDA not available, falling back to CPU[/yellow]")
+            return "cpu"
     if requested == "mps":
         if torch.backends.mps.is_available():
             console.print("[yellow]⚠ MPS selected — note: SB3 MlpPolicy is slower on MPS than CPU[/yellow]")
@@ -84,7 +91,7 @@ def create_vec_env(num_envs: int, stage_config: dict, seed: int = 42, log_dir: P
     if num_envs > 1:
         env = SubprocVecEnv(
             [make_env(i, seed, stage_config, log_dir) for i in range(num_envs)],
-            start_method="fork",
+            start_method="spawn",
         )
     else:
         env = DummyVecEnv([make_env(0, seed, stage_config, log_dir)])
@@ -104,9 +111,11 @@ class CurriculumCallback(BaseCallback):
         num_envs: int = 1,
         window_size: int = 1000,
         checkpoint_freq: int = 50000,
+        max_stage: int = None,
         verbose: int = 1,
     ):
         super().__init__(verbose)
+        self.max_stage = max_stage if max_stage is not None else len(stages) - 1
         self.stages = stages
         self.current_stage = current_stage
         self.checkpoint_dir = checkpoint_dir
@@ -167,7 +176,7 @@ class CurriculumCallback(BaseCallback):
             self.success_rate >= threshold
             and self.stage_episode_count >= min_eps
             and len(self.hit_history) >= self.window_size
-            and self.current_stage < len(self.stages) - 1
+            and self.current_stage < self.max_stage
         ):
             self.stage_complete = True
             return False  # Stop current model.learn() to trigger stage swap
@@ -327,6 +336,7 @@ def train(
     total_timesteps: int = 5_000_000,
     num_envs: int = 8,
     quick_test: bool = False,
+    max_stage: int = None,      # --max-stage: prevent advancing past this stage index
 ):
     """Main training loop with curriculum progression and vectorized envs."""
 
@@ -495,6 +505,7 @@ def train(
         checkpoint_dir=CHECKPOINTS_DIR,
         num_envs=num_envs,
         checkpoint_freq=50000 if not quick_test else 1024,
+        max_stage=max_stage,
     )
 
     # Entropy schedule: conservative for fine-tune (policy already has structure)
@@ -625,7 +636,7 @@ def main():
     print(f"\n[DEBUG] sys.argv = {sys.argv}\n")
 
     parser = argparse.ArgumentParser(description="LEAA RL Training")
-    parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "mps"],
+    parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "mps", "cuda"],
                         dest="device",
                         help="Training device (default: cpu)")
     parser.add_argument("--stage", type=int, default=0,
@@ -647,6 +658,9 @@ def main():
     parser.add_argument("--quick-test", action="store_true",
                         dest="quick_test",
                         help="Quick test mode (minimal training)")
+    parser.add_argument("--max-stage", type=int, default=None,
+                        dest="max_stage",
+                        help="Max stage index to train — prevents advancing past this stage")
     args = parser.parse_args()
 
     # Print parsed values immediately — before anything else
@@ -669,6 +683,7 @@ def main():
         total_timesteps=args.timesteps,
         num_envs=args.num_envs,
         quick_test=args.quick_test,
+        max_stage=args.max_stage,
     )
 
 
