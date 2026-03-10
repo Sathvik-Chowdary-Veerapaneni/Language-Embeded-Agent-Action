@@ -72,6 +72,875 @@ Starting training...
 
 ── Stage 3: static_far (budget: 2,857,142 steps, remaining: 20,000,000) ──
 Logging to /Users/sathvikchowdaryveerapaneni/Desktop/gig_projects/AI_Projects/LEAA/rl_training/logs/ppo_static_far
-  💾 Checkpoint saved: static_far_step_5257288.zip (success: 0.0%)
+  💾 Checkpoint saved: static_far_step_5258688.zip (success: 0.0%)
 
 📐 VecNormalize clip_obs tightened to 10.0
+--------------------------------------
+| curriculum/           |            |
+|    envs               | 8          |
+|    episodes           | 16200      |
+|    stage              | 3          |
+|    stage_name         | static_far |
+|    success_rate       | 0.086      |
+| rollout/              |            |
+|    ep_len_mean        | 1          |
+|    ep_rew_mean        | 4.96       |
+| time/                 |            |
+|    fps                | 139        |
+|    iterations         | 1          |
+|    time_elapsed       | 117        |
+|    total_timesteps    | 5275064    |
+| train/                |            |
+|    ent_coef_scheduled | 0.03       |
+--------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 32600       |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.069       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 3.46        |
+| time/                   |             |
+|    fps                  | 138         |
+|    iterations           | 2           |
+|    time_elapsed         | 236         |
+|    total_timesteps      | 5291448     |
+| train/                  |             |
+|    approx_kl            | 0.006023368 |
+|    clip_fraction        | 0.126       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.03        |
+|    entropy_loss         | 3.74        |
+|    explained_variance   | -0.962      |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.372       |
+|    n_updates            | 1482        |
+|    policy_gradient_loss | 0.00209     |
+|    std                  | 0.82        |
+|    value_loss           | 0.437       |
+-----------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 49000       |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.077       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 5.67        |
+| time/                   |             |
+|    fps                  | 137         |
+|    iterations           | 3           |
+|    time_elapsed         | 356         |
+|    total_timesteps      | 5307832     |
+| train/                  |             |
+|    approx_kl            | 0.006043148 |
+|    clip_fraction        | 0.115       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0299      |
+|    entropy_loss         | 3.74        |
+|    explained_variance   | -0.545      |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.236       |
+|    n_updates            | 1487        |
+|    policy_gradient_loss | 0.00193     |
+|    std                  | 0.821       |
+|    value_loss           | 0.313       |
+-----------------------------------------
+  💾 Checkpoint saved: static_far_step_5308688.zip (success: 6.7%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 65400        |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.055        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 4.82         |
+| time/                   |              |
+|    fps                  | 138          |
+|    iterations           | 4            |
+|    time_elapsed         | 474          |
+|    total_timesteps      | 5324216      |
+| train/                  |              |
+|    approx_kl            | 0.0035988519 |
+|    clip_fraction        | 0.125        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0299       |
+|    entropy_loss         | 3.74         |
+|    explained_variance   | -0.109       |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.223        |
+|    n_updates            | 1492         |
+|    policy_gradient_loss | 0.00223      |
+|    std                  | 0.822        |
+|    value_loss           | 0.246        |
+------------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 81800       |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.064       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 2.83        |
+| time/                   |             |
+|    fps                  | 137         |
+|    iterations           | 5           |
+|    time_elapsed         | 597         |
+|    total_timesteps      | 5340600     |
+| train/                  |             |
+|    approx_kl            | 0.004673203 |
+|    clip_fraction        | 0.108       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0299      |
+|    entropy_loss         | 3.74        |
+|    explained_variance   | 0.065       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.208       |
+|    n_updates            | 1497        |
+|    policy_gradient_loss | 0.00123     |
+|    std                  | 0.822       |
+|    value_loss           | 0.204       |
+-----------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 98200       |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.078       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 4.63        |
+| time/                   |             |
+|    fps                  | 137         |
+|    iterations           | 6           |
+|    time_elapsed         | 716         |
+|    total_timesteps      | 5356984     |
+| train/                  |             |
+|    approx_kl            | 0.006824249 |
+|    clip_fraction        | 0.137       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0299      |
+|    entropy_loss         | 3.74        |
+|    explained_variance   | 0.213       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.179       |
+|    n_updates            | 1502        |
+|    policy_gradient_loss | 0.00282     |
+|    std                  | 0.823       |
+|    value_loss           | 0.167       |
+-----------------------------------------
+  💾 Checkpoint saved: static_far_step_5358688.zip (success: 7.4%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 114600      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.072       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 3.4         |
+| time/                   |             |
+|    fps                  | 137         |
+|    iterations           | 7           |
+|    time_elapsed         | 834         |
+|    total_timesteps      | 5373368     |
+| train/                  |             |
+|    approx_kl            | 0.004942359 |
+|    clip_fraction        | 0.0996      |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0299      |
+|    entropy_loss         | 3.74        |
+|    explained_variance   | 0.309       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.182       |
+|    n_updates            | 1507        |
+|    policy_gradient_loss | 0.00173     |
+|    std                  | 0.824       |
+|    value_loss           | 0.144       |
+-----------------------------------------
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 131000       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.056        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 4.99         |
+| time/                   |              |
+|    fps                  | 137          |
+|    iterations           | 8            |
+|    time_elapsed         | 955          |
+|    total_timesteps      | 5389752      |
+| train/                  |              |
+|    approx_kl            | 0.0037156814 |
+|    clip_fraction        | 0.136        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0299       |
+|    entropy_loss         | 3.74         |
+|    explained_variance   | 0.394        |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.165        |
+|    n_updates            | 1512         |
+|    policy_gradient_loss | 0.000603     |
+|    std                  | 0.825        |
+|    value_loss           | 0.127        |
+------------------------------------------
+----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 147400     |
+|    stage                | 3          |
+|    stage_name           | static_far |
+|    success_rate         | 0.065      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 4.39       |
+| time/                   |            |
+|    fps                  | 137        |
+|    iterations           | 9          |
+|    time_elapsed         | 1071       |
+|    total_timesteps      | 5406136    |
+| train/                  |            |
+|    approx_kl            | 0.0039651  |
+|    clip_fraction        | 0.121      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0298     |
+|    entropy_loss         | 3.74       |
+|    explained_variance   | 0.453      |
+|    learning_rate        | 1e-05      |
+|    loss                 | 0.174      |
+|    n_updates            | 1517       |
+|    policy_gradient_loss | 0.00032    |
+|    std                  | 0.826      |
+|    value_loss           | 0.112      |
+----------------------------------------
+  💾 Checkpoint saved: static_far_step_5408688.zip (success: 7.2%)
+----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 163800     |
+|    stage                | 3          |
+|    stage_name           | static_far |
+|    success_rate         | 0.074      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 2.71       |
+| time/                   |            |
+|    fps                  | 138        |
+|    iterations           | 10         |
+|    time_elapsed         | 1184       |
+|    total_timesteps      | 5422520    |
+| train/                  |            |
+|    approx_kl            | 0.00578837 |
+|    clip_fraction        | 0.152      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0298     |
+|    entropy_loss         | 3.74       |
+|    explained_variance   | 0.514      |
+|    learning_rate        | 1e-05      |
+|    loss                 | 0.162      |
+|    n_updates            | 1522       |
+|    policy_gradient_loss | 0.00123    |
+|    std                  | 0.827      |
+|    value_loss           | 0.097      |
+----------------------------------------
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 180200       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.064        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.84         |
+| time/                   |              |
+|    fps                  | 138          |
+|    iterations           | 11           |
+|    time_elapsed         | 1298         |
+|    total_timesteps      | 5438904      |
+| train/                  |              |
+|    approx_kl            | 0.0062594726 |
+|    clip_fraction        | 0.157        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0298       |
+|    entropy_loss         | 3.74         |
+|    explained_variance   | 0.553        |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.161        |
+|    n_updates            | 1527         |
+|    policy_gradient_loss | 0.000715     |
+|    std                  | 0.827        |
+|    value_loss           | 0.0922       |
+------------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 196600      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.07        |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 4           |
+| time/                   |             |
+|    fps                  | 138         |
+|    iterations           | 12          |
+|    time_elapsed         | 1414        |
+|    total_timesteps      | 5455288     |
+| train/                  |             |
+|    approx_kl            | 0.007456336 |
+|    clip_fraction        | 0.132       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0298      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.585       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.156       |
+|    n_updates            | 1532        |
+|    policy_gradient_loss | 0.000179    |
+|    std                  | 0.828       |
+|    value_loss           | 0.08        |
+-----------------------------------------
+  💾 Checkpoint saved: static_far_step_5458688.zip (success: 7.6%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 212800       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.08         |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 4.81         |
+| time/                   |              |
+|    fps                  | 139          |
+|    iterations           | 13           |
+|    time_elapsed         | 1530         |
+|    total_timesteps      | 5471672      |
+| train/                  |              |
+|    approx_kl            | 0.0048663598 |
+|    clip_fraction        | 0.148        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0298       |
+|    entropy_loss         | 3.73         |
+|    explained_variance   | 0.61         |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.158        |
+|    n_updates            | 1537         |
+|    policy_gradient_loss | 0.00179      |
+|    std                  | 0.829        |
+|    value_loss           | 0.0757       |
+------------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 229200      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.064       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 3.46        |
+| time/                   |             |
+|    fps                  | 139         |
+|    iterations           | 14          |
+|    time_elapsed         | 1645        |
+|    total_timesteps      | 5488056     |
+| train/                  |             |
+|    approx_kl            | 0.005076131 |
+|    clip_fraction        | 0.15        |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0297      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.644       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.14        |
+|    n_updates            | 1542        |
+|    policy_gradient_loss | -0.000739   |
+|    std                  | 0.83        |
+|    value_loss           | 0.0726      |
+-----------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 245600      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.061       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 3.26        |
+| time/                   |             |
+|    fps                  | 139         |
+|    iterations           | 15          |
+|    time_elapsed         | 1761        |
+|    total_timesteps      | 5504440     |
+| train/                  |             |
+|    approx_kl            | 0.004942333 |
+|    clip_fraction        | 0.143       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0297      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.673       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.14        |
+|    n_updates            | 1547        |
+|    policy_gradient_loss | -0.000758   |
+|    std                  | 0.831       |
+|    value_loss           | 0.0657      |
+-----------------------------------------
+  💾 Checkpoint saved: static_far_step_5508688.zip (success: 6.1%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 262000       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.082        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 4.44         |
+| time/                   |              |
+|    fps                  | 139          |
+|    iterations           | 16           |
+|    time_elapsed         | 1880         |
+|    total_timesteps      | 5520824      |
+| train/                  |              |
+|    approx_kl            | 0.0067539066 |
+|    clip_fraction        | 0.14         |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0297       |
+|    entropy_loss         | 3.73         |
+|    explained_variance   | 0.694        |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.141        |
+|    n_updates            | 1552         |
+|    policy_gradient_loss | -0.000869    |
+|    std                  | 0.832        |
+|    value_loss           | 0.0618       |
+------------------------------------------
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 278400       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.065        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.84         |
+| time/                   |              |
+|    fps                  | 139          |
+|    iterations           | 17           |
+|    time_elapsed         | 1998         |
+|    total_timesteps      | 5537208      |
+| train/                  |              |
+|    approx_kl            | 0.0042197388 |
+|    clip_fraction        | 0.137        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0297       |
+|    entropy_loss         | 3.73         |
+|    explained_variance   | 0.715        |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.123        |
+|    n_updates            | 1557         |
+|    policy_gradient_loss | -0.000517    |
+|    std                  | 0.833        |
+|    value_loss           | 0.0579       |
+------------------------------------------
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 294800       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.068        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.26         |
+| time/                   |              |
+|    fps                  | 139          |
+|    iterations           | 18           |
+|    time_elapsed         | 2115         |
+|    total_timesteps      | 5553592      |
+| train/                  |              |
+|    approx_kl            | 0.0066169426 |
+|    clip_fraction        | 0.165        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0297       |
+|    entropy_loss         | 3.73         |
+|    explained_variance   | 0.733        |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.156        |
+|    n_updates            | 1562         |
+|    policy_gradient_loss | 0.000295     |
+|    std                  | 0.833        |
+|    value_loss           | 0.0552       |
+------------------------------------------
+  💾 Checkpoint saved: static_far_step_5558688.zip (success: 5.9%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 311200      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.073       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 4.46        |
+| time/                   |             |
+|    fps                  | 139         |
+|    iterations           | 19          |
+|    time_elapsed         | 2230        |
+|    total_timesteps      | 5569976     |
+| train/                  |             |
+|    approx_kl            | 0.006067344 |
+|    clip_fraction        | 0.136       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0297      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.752       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.127       |
+|    n_updates            | 1567        |
+|    policy_gradient_loss | -0.00306    |
+|    std                  | 0.834       |
+|    value_loss           | 0.0461      |
+-----------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 327600      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.072       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 3.69        |
+| time/                   |             |
+|    fps                  | 139         |
+|    iterations           | 20          |
+|    time_elapsed         | 2344        |
+|    total_timesteps      | 5586360     |
+| train/                  |             |
+|    approx_kl            | 0.009582818 |
+|    clip_fraction        | 0.169       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0296      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.78        |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.143       |
+|    n_updates            | 1572        |
+|    policy_gradient_loss | -0.000357   |
+|    std                  | 0.834       |
+|    value_loss           | 0.0448      |
+-----------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 344000      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.07        |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 6.48        |
+| time/                   |             |
+|    fps                  | 139         |
+|    iterations           | 21          |
+|    time_elapsed         | 2458        |
+|    total_timesteps      | 5602744     |
+| train/                  |             |
+|    approx_kl            | 0.004808808 |
+|    clip_fraction        | 0.143       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0296      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.788       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.119       |
+|    n_updates            | 1577        |
+|    policy_gradient_loss | -0.00284    |
+|    std                  | 0.836       |
+|    value_loss           | 0.0447      |
+-----------------------------------------
+  💾 Checkpoint saved: static_far_step_5608688.zip (success: 6.1%)
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 360400       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.065        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 2.44         |
+| time/                   |              |
+|    fps                  | 140          |
+|    iterations           | 22           |
+|    time_elapsed         | 2572         |
+|    total_timesteps      | 5619128      |
+| train/                  |              |
+|    approx_kl            | 0.0074178353 |
+|    clip_fraction        | 0.132        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0296       |
+|    entropy_loss         | 3.73         |
+|    explained_variance   | 0.819        |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.126        |
+|    n_updates            | 1582         |
+|    policy_gradient_loss | -0.00236     |
+|    std                  | 0.837        |
+|    value_loss           | 0.038        |
+------------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 376800      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.066       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 4.39        |
+| time/                   |             |
+|    fps                  | 140         |
+|    iterations           | 23          |
+|    time_elapsed         | 2688        |
+|    total_timesteps      | 5635512     |
+| train/                  |             |
+|    approx_kl            | 0.007114496 |
+|    clip_fraction        | 0.153       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0296      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.833       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.13        |
+|    n_updates            | 1587        |
+|    policy_gradient_loss | -0.00183    |
+|    std                  | 0.838       |
+|    value_loss           | 0.0343      |
+-----------------------------------------
+----------------------------------------
+| curriculum/             |            |
+|    envs                 | 8          |
+|    episodes             | 393200     |
+|    stage                | 3          |
+|    stage_name           | static_far |
+|    success_rate         | 0.074      |
+| rollout/                |            |
+|    ep_len_mean          | 1          |
+|    ep_rew_mean          | 2.95       |
+| time/                   |            |
+|    fps                  | 140        |
+|    iterations           | 24         |
+|    time_elapsed         | 2804       |
+|    total_timesteps      | 5651896    |
+| train/                  |            |
+|    approx_kl            | 0.00694542 |
+|    clip_fraction        | 0.173      |
+|    clip_range           | 0.15       |
+|    ent_coef_scheduled   | 0.0296     |
+|    entropy_loss         | 3.73       |
+|    explained_variance   | 0.829      |
+|    learning_rate        | 1e-05      |
+|    loss                 | 0.13       |
+|    n_updates            | 1592       |
+|    policy_gradient_loss | -0.00198   |
+|    std                  | 0.838      |
+|    value_loss           | 0.0371     |
+----------------------------------------
+  💾 Checkpoint saved: static_far_step_5658688.zip (success: 7.0%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 409600      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.074       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 3.19        |
+| time/                   |             |
+|    fps                  | 140         |
+|    iterations           | 25          |
+|    time_elapsed         | 2918        |
+|    total_timesteps      | 5668280     |
+| train/                  |             |
+|    approx_kl            | 0.005341896 |
+|    clip_fraction        | 0.178       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0295      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.846       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.117       |
+|    n_updates            | 1597        |
+|    policy_gradient_loss | -0.00263    |
+|    std                  | 0.839       |
+|    value_loss           | 0.03        |
+-----------------------------------------
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 425800       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.067        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 3.8          |
+| time/                   |              |
+|    fps                  | 140          |
+|    iterations           | 26           |
+|    time_elapsed         | 3033         |
+|    total_timesteps      | 5684664      |
+| train/                  |              |
+|    approx_kl            | 0.0063252123 |
+|    clip_fraction        | 0.147        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0295       |
+|    entropy_loss         | 3.73         |
+|    explained_variance   | 0.854        |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.118        |
+|    n_updates            | 1602         |
+|    policy_gradient_loss | -0.00172     |
+|    std                  | 0.839        |
+|    value_loss           | 0.0312       |
+------------------------------------------
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 442200      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.061       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 5.18        |
+| time/                   |             |
+|    fps                  | 140         |
+|    iterations           | 27          |
+|    time_elapsed         | 3147        |
+|    total_timesteps      | 5701048     |
+| train/                  |             |
+|    approx_kl            | 0.005947058 |
+|    clip_fraction        | 0.154       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0295      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.862       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.125       |
+|    n_updates            | 1607        |
+|    policy_gradient_loss | -0.00322    |
+|    std                  | 0.841       |
+|    value_loss           | 0.0288      |
+-----------------------------------------
+  💾 Checkpoint saved: static_far_step_5708688.zip (success: 6.2%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 8           |
+|    episodes             | 458600      |
+|    stage                | 3           |
+|    stage_name           | static_far  |
+|    success_rate         | 0.059       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 2.26        |
+| time/                   |             |
+|    fps                  | 140         |
+|    iterations           | 28          |
+|    time_elapsed         | 3260        |
+|    total_timesteps      | 5717432     |
+| train/                  |             |
+|    approx_kl            | 0.009986105 |
+|    clip_fraction        | 0.188       |
+|    clip_range           | 0.15        |
+|    ent_coef_scheduled   | 0.0295      |
+|    entropy_loss         | 3.73        |
+|    explained_variance   | 0.873       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.108       |
+|    n_updates            | 1612        |
+|    policy_gradient_loss | -0.00158    |
+|    std                  | 0.842       |
+|    value_loss           | 0.0278      |
+-----------------------------------------
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 475000       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.069        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 2            |
+| time/                   |              |
+|    fps                  | 140          |
+|    iterations           | 29           |
+|    time_elapsed         | 3370         |
+|    total_timesteps      | 5733816      |
+| train/                  |              |
+|    approx_kl            | 0.0061984584 |
+|    clip_fraction        | 0.155        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0295       |
+|    entropy_loss         | 3.73         |
+|    explained_variance   | 0.87         |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.129        |
+|    n_updates            | 1617         |
+|    policy_gradient_loss | -0.00403     |
+|    std                  | 0.842        |
+|    value_loss           | 0.0269       |
+------------------------------------------
+------------------------------------------
+| curriculum/             |              |
+|    envs                 | 8            |
+|    episodes             | 491400       |
+|    stage                | 3            |
+|    stage_name           | static_far   |
+|    success_rate         | 0.073        |
+| rollout/                |              |
+|    ep_len_mean          | 1            |
+|    ep_rew_mean          | 4.1          |
+| time/                   |              |
+|    fps                  | 141          |
+|    iterations           | 30           |
+|    time_elapsed         | 3480         |
+|    total_timesteps      | 5750200      |
+| train/                  |              |
+|    approx_kl            | 0.0054362994 |
+|    clip_fraction        | 0.177        |
+|    clip_range           | 0.15         |
+|    ent_coef_scheduled   | 0.0295       |
+|    entropy_loss         | 3.73         |
+|    explained_variance   | 0.88         |
+|    learning_rate        | 1e-05        |
+|    loss                 | 0.132        |
+|    n_updates            | 1622         |
+|    policy_gradient_loss | -0.00174     |
+|    std                  | 0.843        |
+|    value_loss           | 0.027        |
+------------------------------------------
+  💾 Checkpoint saved: static_far_step_5758688.zip (success: 5.8%)
