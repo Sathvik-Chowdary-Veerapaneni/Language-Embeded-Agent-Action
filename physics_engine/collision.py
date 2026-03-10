@@ -148,6 +148,7 @@ def compute_reward(
     distance_from_center: Optional[float],
     target_radius: float,
     closest_approach: Optional[float] = None,
+    target_distance: float = 0.0,
 ) -> float:
     """Compute reward with pure continuous precision signal (v2).
 
@@ -158,14 +159,15 @@ def compute_reward(
         - Halfway      (precision=0.5) → 40
         - Edge graze   (precision=0.0) → 20
 
-    On miss — exponential decay (unchanged from v1):
-        10.0 * exp(-distance / (2 * target_radius))
+    On miss — exponential decay:
+        10.0 * exp(-distance / scale)
 
     Args:
         hit: Whether the arrow hit the target.
         distance_from_center: Distance from hit point to target center.
         target_radius: Target sphere radius.
         closest_approach: Closest distance any trajectory point got to target center (for misses).
+        target_distance: Distance from agent to target (for distance-adaptive miss scale).
 
     Returns:
         Float reward value.
@@ -178,13 +180,13 @@ def compute_reward(
 
     # Miss — exponential decay based on closest approach
     # v3.2: Widened decay scale from 2*radius to max(2*radius, 5.0).
-    # Old 2*radius decayed too fast for small targets (radius=0.75 → scale=1.5m),
-    # producing near-zero gradient beyond a few meters. Early training, where
-    # misses are typically 10-30m, got no useful learning signal.
-    # With scale ≥ 5.0m the agent still sees meaningful reward at 10m (~1.35)
-    # while far misses (30m+) still decay toward zero.
+    # v3.3: Made scale distance-adaptive. At 30-50m the fixed scale=5.0 gave
+    # near-zero reward for 10-20m misses (exp(-20/5)≈0.018), cutting off the
+    # gradient signal before the agent could learn aim direction. Scale now grows
+    # with target_distance so 20m misses at 40m range give reward≈1.9 instead of
+    # 0.018, providing continuous improvement signal throughout static_far.
     dist = closest_approach if closest_approach is not None else (distance_from_center or 50.0)
-    scale = max(2.0 * max(target_radius, 1e-8), 5.0)
+    scale = max(2.0 * max(target_radius, 1e-8), target_distance * 0.3, 5.0)
     return 10.0 * np.exp(-dist / scale)
 
 

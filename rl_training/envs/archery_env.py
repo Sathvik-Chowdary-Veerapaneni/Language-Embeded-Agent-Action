@@ -7,10 +7,16 @@ Agent takes one shot per episode → gets reward → reset.
 Observation space (22 floats):
     Agent position (3) + forward dir (3) + target pos (3) + target vel (3) +
     wind dir (3) + wind speed (1) + arrow type one-hot (3) +
-    draw strength (1) + distance to target (1) + elevation diff (1)
+    pitch_hint (1) + distance to target (1) + elevation diff (1)
+
+    pitch_hint: physics-based estimate of required launch angle normalized to [-1,1]
+    assuming ±30° action range. Replaces the old draw_strength slot which was always
+    0.5 at episode start and carried no useful information.
 
 Action space (3 floats):
-    aim_pitch [-1,1], aim_yaw [-1,1], draw_strength [-1,1]
+    aim_pitch [-1,1] → [-30°, +30°]  (was ±90° — narrowed for 3× finer resolution)
+    aim_yaw   [-1,1] → [-45°, +45°]
+    draw_strength [-1,1] → [0.3, 1.0]
 """
 
 import sys
@@ -179,6 +185,18 @@ class ArcheryEnv(gym.Env):
         arrow_onehot = np.zeros(3)
         arrow_onehot[self.arrow_type_index] = 1.0
 
+        # Physics-based pitch hint: gravity-compensation angle to reach target.
+        # Uses mid-draw speed (70 * 0.65 = 45.5 m/s) as a reasonable estimate.
+        # Normalized to [-1, 1] matching the ±30° action range in step().
+        # Replaces the old draw_strength slot which was always 0.5 at episode
+        # start (reset sets it to 0.5; 1-step episodes mean policy never sees
+        # any other value) — providing zero useful signal.
+        h_dist = max(np.sqrt(to_target[0] ** 2 + to_target[1] ** 2), 1e-8)
+        v_eff = 70.0 * 0.65  # MAX_DRAW_SPEED * mid-draw estimate
+        gravity_comp = 0.5 * 9.81 * (h_dist / v_eff) ** 2
+        pitch_hint_rad = np.arctan2(elevation_diff + gravity_comp, h_dist)
+        pitch_hint_norm = float(np.clip(pitch_hint_rad / np.radians(30), -1.0, 1.0))
+
         obs = np.concatenate([
             self.agent_position,                         # 3
             self.agent_forward,                          # 3
@@ -187,7 +205,7 @@ class ArcheryEnv(gym.Env):
             self.wind.direction,                         # 3
             [self.wind.speed],                           # 1
             arrow_onehot,                                # 3
-            [self.draw_strength],                        # 1
+            [pitch_hint_norm],                           # 1  (was: draw_strength=0.5 always)
             [distance],                                  # 1
             [elevation_diff],                            # 1
         ]).astype(np.float32)                            # Total: 22
@@ -222,14 +240,17 @@ class ArcheryEnv(gym.Env):
         """Execute one shot.
 
         Action mapping:
-            action[0]: aim_pitch  [-1,1] → [-90°, 90°]
+            action[0]: aim_pitch  [-1,1] → [-30°, 30°] relative to horizon
             action[1]: aim_yaw   [-1,1] → [-45°, 45°] relative to target bearing
             action[2]: draw_strength [-1,1] → [0.3, 1.0]
         """
         action = np.clip(action, -1.0, 1.0)
 
         # Map actions to physical values
-        pitch = action[0] * np.radians(90)
+        # Pitch: narrowed from ±90° to ±30° for 3× finer resolution.
+        # Optimal range at 30-50m is 3-10°, which now covers 10-33% of
+        # the action space instead of 3-11% with the old ±90° mapping.
+        pitch = action[0] * np.radians(30)
         yaw_offset = action[1] * np.radians(45)
 
         # Compute bearing to target for yaw reference
@@ -288,9 +309,11 @@ class ArcheryEnv(gym.Env):
         )
 
         # Compute reward (continuous gradient signal via closest_approach)
+        target_distance = np.linalg.norm(self.target.position - self.agent_position)
         reward = compute_reward(
             hit, dist_from_center, predicted_target.radius,
             closest_approach=closest_dist,
+            target_distance=target_distance,
         )
 
         self.last_reward = reward

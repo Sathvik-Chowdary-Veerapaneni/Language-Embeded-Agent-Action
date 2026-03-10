@@ -37,7 +37,7 @@ stages:
     target_moving: false
     wind_enabled: false
     agent_moving: false
-    success_threshold: 0.85    # v4.0: raised — high-accuracy retraining
+    success_threshold: 0.70    # v4.1: lowered from 0.85 — consistent with prior stages
     min_episodes: 100000       # v4.0: raised for robust learning
 
   - name: "moving_slow"
