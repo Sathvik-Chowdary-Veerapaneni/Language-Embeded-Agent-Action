@@ -707,3 +707,24 @@ Wed Mar 11 21:00:02 EDT 2026: Committed and pushed.
 To github.com:Sathvik-Chowdary-Veerapaneni/Language-Embeded-Agent-Action.git
    546b96a..e3d9a29  main -> main
 Wed Mar 11 22:00:01 EDT 2026: Committed and pushed.
+warning: adding embedded git repository: .claude/worktrees/vigilant-noyce
+hint: You've added another git repository inside your current repository.
+hint: Clones of the outer repository will not contain the contents of
+hint: the embedded repository and will not know how to obtain it.
+hint: If you meant to add a submodule, use:
+hint:
+hint: 	git submodule add <url> .claude/worktrees/vigilant-noyce
+hint:
+hint: If you added this path by mistake, you can remove it from the
+hint: index with:
+hint:
+hint: 	git rm --cached .claude/worktrees/vigilant-noyce
+hint:
+hint: See "git help submodule" for more information.
+hint: Disable this message with "git config set advice.addEmbeddedRepo false"
+[main 558890f] auto: training checkpoint 2026-03-11 23:00
+ 2 files changed, 6 insertions(+)
+ create mode 160000 .claude/worktrees/vigilant-noyce
+To github.com:Sathvik-Chowdary-Veerapaneni/Language-Embeded-Agent-Action.git
+   e3d9a29..558890f  main -> main
+Wed Mar 11 23:00:02 EDT 2026: Committed and pushed.
