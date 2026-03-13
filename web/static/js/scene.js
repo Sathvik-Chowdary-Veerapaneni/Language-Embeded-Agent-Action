@@ -28,7 +28,7 @@ class ArcheryScene {
         this.aimStartTime = 0;
         this.aimPower = 0;          // 0-1, builds over time
         this._cameraDefault = { pos: new THREE.Vector3(-4.85, 2.21, 0.41), target: new THREE.Vector3(15.00, 1.30, -0.60) };
-        this._cameraAim = { pos: new THREE.Vector3(-0.05, 1.75, 0.15), target: new THREE.Vector3(20.00, 1.50, 0.00) };
+        this._cameraAim = { pos: new THREE.Vector3(-1.2, 1.85, 0.65), target: new THREE.Vector3(20.00, 1.50, 0.00) };
         this._cameraLerp = 0;       // 0 = default, 1 = aim POV
         this._cameraLerpDir = 0;    // +1 zooming in, -1 zooming out, 0 idle
 
@@ -524,7 +524,7 @@ class ArcheryScene {
         loadGLB(base + 'Arrow.glb', (model, box, size) => {
             // Arrow should be ~0.7m long
             const targetLen = 0.7;
-            const s = targetLen / Math.max(size.z, size.x, 0.001);
+            const s = targetLen / Math.max(size.y, size.z, size.x, 0.001);
             model.scale.set(s, s, s);
             model.traverse(child => {
                 if (child.isMesh) { child.castShadow = true; }
@@ -1201,9 +1201,9 @@ class ArcheryScene {
             // _launchArrowMesh sets quaternion on the outer group
             const wrapper = new THREE.Group();
             const clone = this._glbArrowTemplate.clone();
-            // GLB arrow likely points along Y or Z — rotate inner model
-            // so its forward axis aligns with +X (the flight direction axis)
-            clone.rotation.set(0, Math.PI / 2, 0);
+            // GLB arrow points along Y (vertical) — rotate so it aligns with +X (flight direction)
+            // rotation.z = -PI/2 rotates Y-up to X-forward (tip pointing +X)
+            clone.rotation.set(0, 0, -Math.PI / 2);
             wrapper.add(clone);
             return wrapper;
         }
