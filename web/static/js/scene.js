@@ -67,27 +67,8 @@ class ArcheryScene {
         this.camera = new THREE.PerspectiveCamera(
             45, window.innerWidth / window.innerHeight, 0.1, 300
         );
-        this.camera.position.set(-2.0, 1.4, 0.8);
-        this.camera.lookAt(15, 1.3, -0.6);
-
-        // OrbitControls for manual camera positioning
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.target.set(15, 1.3, -0.6);
-        this.controls.update();
-
-        // Create debug HUD for camera position
-        this.cameraDebugDiv = document.createElement('div');
-        this.cameraDebugDiv.style.position = 'absolute';
-        this.cameraDebugDiv.style.bottom = '10px';
-        this.cameraDebugDiv.style.left = '10px';
-        this.cameraDebugDiv.style.padding = '10px';
-        this.cameraDebugDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        this.cameraDebugDiv.style.color = 'white';
-        this.cameraDebugDiv.style.fontFamily = 'monospace';
-        this.cameraDebugDiv.style.fontSize = '12px';
-        this.cameraDebugDiv.style.zIndex = '9999';
-        this.cameraDebugDiv.style.pointerEvents = 'none';
-        document.body.appendChild(this.cameraDebugDiv);
+        this.camera.position.set(-4.85, 2.21, 0.41);
+        this.camera.lookAt(15.00, 1.30, -0.60);
     }
 
     // -------------------------------------------------------------------
@@ -1048,13 +1029,6 @@ class ArcheryScene {
         requestAnimationFrame(() => this.animate());
         const dt = this.clock.getDelta();
         const time = this.clock.getElapsedTime();
-
-        if (this.controls) {
-            this.controls.update();
-            const pos = this.camera.position;
-            const tgt = this.controls.target;
-            this.cameraDebugDiv.innerHTML = `Camera Position:<br>x: ${pos.x.toFixed(2)}<br>y: ${pos.y.toFixed(2)}<br>z: ${pos.z.toFixed(2)}<br><br>Target (lookAt):<br>x: ${tgt.x.toFixed(2)}<br>y: ${tgt.y.toFixed(2)}<br>z: ${tgt.z.toFixed(2)}`;
-        }
 
         // Moving targets
         Object.keys(this.targets).forEach(id => {
