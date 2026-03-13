@@ -362,3 +362,61 @@ Logging to /content/leaa/rl_training/logs/ppo_moving_slow
 -----------------------------------------
   💾 Checkpoint saved: moving_slow_step_11410534.zip (success: 24.8%)
   💾 Checkpoint saved: moving_slow_step_11460534.zip (success: 20.0%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 50          |
+|    episodes             | 1126400     |
+|    stage                | 4           |
+|    stage_name           | moving_slow |
+|    success_rate         | 0.223       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 12          |
+| time/                   |             |
+|    fps                  | 376         |
+|    iterations           | 11          |
+|    time_elapsed         | 2988        |
+|    total_timesteps      | 11486884    |
+| train/                  |             |
+|    approx_kl            | 0.020071892 |
+|    clip_fraction        | 0.248       |
+|    clip_range           | 0.2         |
+|    entropy_loss         | 5.18        |
+|    explained_variance   | 0.355       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.193       |
+|    n_updates            | 3127        |
+|    policy_gradient_loss | 0.000506    |
+|    std                  | 0.688       |
+|    value_loss           | 0.109       |
+-----------------------------------------
+  💾 Checkpoint saved: moving_slow_step_11510534.zip (success: 22.8%)
+  💾 Checkpoint saved: moving_slow_step_11560534.zip (success: 24.1%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 50          |
+|    episodes             | 1228800     |
+|    stage                | 4           |
+|    stage_name           | moving_slow |
+|    success_rate         | 0.245       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 11.6        |
+| time/                   |             |
+|    fps                  | 376         |
+|    iterations           | 12          |
+|    time_elapsed         | 3267        |
+|    total_timesteps      | 11589284    |
+| train/                  |             |
+|    approx_kl            | 0.019325748 |
+|    clip_fraction        | 0.236       |
+|    clip_range           | 0.2         |
+|    entropy_loss         | 5.17        |
+|    explained_variance   | 0.377       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.182       |
+|    n_updates            | 3132        |
+|    policy_gradient_loss | -0.000583   |
+|    std                  | 0.686       |
+|    value_loss           | 0.108       |
+-----------------------------------------
