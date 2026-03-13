@@ -28,6 +28,75 @@ body {
     height: 100%;
 }
 
+/* Mode Toggle */
+#mode-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: rgba(10, 10, 30, 0.75);
+    border: 1px solid rgba(100, 120, 255, 0.3);
+    border-radius: 8px;
+    padding: 14px 18px;
+    min-width: 180px;
+    backdrop-filter: blur(8px);
+}
+
+.mode-switch {
+    display: flex;
+    gap: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(100, 120, 255, 0.25);
+    margin-bottom: 10px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 0;
+    background: rgba(30, 30, 60, 0.6);
+    color: #6a6a8a;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.mode-btn.active {
+    background: rgba(70, 80, 180, 0.7);
+    color: #fff;
+}
+
+.mode-btn.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.mode-label {
+    font-size: 11px;
+    color: #8a8aaa;
+    margin-bottom: 6px;
+}
+
+.mode-status {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.mode-status.online {
+    color: #4ade80;
+}
+
+.mode-status.offline {
+    color: #f87171;
+}
+
 /* HUD Stats */
 #hud {
     position: fixed;
@@ -99,6 +168,66 @@ body {
     border: 1px solid rgba(240, 100, 100, 0.6);
 }
 
+/* Wind Controls */
+#wind-panel {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(10, 10, 30, 0.75);
+    border: 1px solid rgba(100, 120, 255, 0.3);
+    border-radius: 8px;
+    padding: 10px 18px;
+    backdrop-filter: blur(8px);
+}
+
+.wind-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #8892ff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.wind-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wind-row label {
+    font-size: 11px;
+    color: #8a8aaa;
+    white-space: nowrap;
+}
+
+#wind-direction {
+    background: rgba(30, 30, 60, 0.8);
+    border: 1px solid rgba(100, 120, 255, 0.25);
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 12px;
+    padding: 4px 8px;
+    outline: none;
+}
+
+#wind-speed {
+    width: 100px;
+    accent-color: #8892ff;
+    cursor: pointer;
+}
+
+#wind-speed-label {
+    font-size: 12px;
+    color: #e0e0e0;
+    font-weight: 600;
+    min-width: 50px;
+}
+
 /* Command Bar */
 #command-bar {
     position: fixed;
@@ -164,4 +293,170 @@ button:active {
 
 #fire-btn:hover {
     background: rgba(220, 80, 80, 0.9);
+}
+
+/* Crosshair Overlay */
+#crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 30;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+#crosshair.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#crosshair.show {
+    opacity: 1;
+}
+
+.crosshair-h,
+.crosshair-v {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1px;
+}
+
+.crosshair-h {
+    width: 32px;
+    height: 2px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.crosshair-v {
+    width: 2px;
+    height: 32px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Aim Power Bar */
+#aim-power {
+    position: fixed;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.3s ease;
+}
+
+#aim-power.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#aim-power.show {
+    opacity: 1;
+}
+
+.power-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.power-bar-bg {
+    width: 8px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.power-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(to top, #4ade80, #facc15, #ef4444);
+    border-radius: 4px;
+    transition: height 0.1s linear;
+}
+
+/* Aim mode — fade UI panels */
+body.aiming #command-bar,
+body.aiming #wind-panel,
+body.aiming #mode-toggle,
+body.aiming #hud,
+body.aiming #game-hint,
+body.aiming #bottom-bar {
+    opacity: 0.1;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+/* Command bar hidden in game mode */
+#command-bar.hidden {
+    display: none;
+}
+
+/* Game Hint bar */
+#game-hint {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: rgba(10, 10, 30, 0.65);
+    border: 1px solid rgba(100, 120, 255, 0.2);
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 13px;
+    color: #8a8aaa;
+    letter-spacing: 0.3px;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+}
+
+#game-hint.hidden {
+    display: none;
+}
+
+.hint-key {
+    display: inline-block;
+    background: rgba(100, 120, 255, 0.25);
+    color: #c0c8ff;
+    font-weight: 700;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Bottom bar (randomize etc.) */
+#bottom-bar {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    z-index: 10;
+}
+
+/* Game mode cursor */
+body.game-mode #canvas-container {
+    cursor: crosshair;
+}
+
+/* Aiming mode — hide cursor during mouse-look */
+body.aiming #canvas-container {
+    cursor: none;
 }

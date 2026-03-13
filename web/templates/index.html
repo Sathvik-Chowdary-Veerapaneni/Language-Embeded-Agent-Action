@@ -9,6 +9,16 @@
 <body>
     <div id="canvas-container"></div>
 
+    <!-- Mode Toggle -->
+    <div id="mode-toggle">
+        <div class="mode-switch">
+            <button id="mode-heuristic" class="mode-btn active">Heuristic</button>
+            <button id="mode-rl" class="mode-btn">RL Agent</button>
+        </div>
+        <div id="mode-label" class="mode-label">Brute-Force Aiming</div>
+        <div id="mode-status" class="mode-status online">ACTIVE</div>
+    </div>
+
     <!-- HUD Stats -->
     <div id="hud">
         <div class="hud-title">LEAA Archery</div>
@@ -17,19 +27,61 @@
         <div class="hud-stat">Accuracy: <span id="stat-accuracy">0%</span></div>
     </div>
 
+    <!-- Crosshair Overlay (shown during aim mode) -->
+    <div id="crosshair" class="hidden">
+        <div class="crosshair-h"></div>
+        <div class="crosshair-v"></div>
+    </div>
+
+    <!-- Aim Power Bar -->
+    <div id="aim-power" class="hidden">
+        <div class="power-label">DRAW</div>
+        <div class="power-bar-bg"><div id="power-fill" class="power-fill"></div></div>
+    </div>
+
     <!-- Result Banner -->
     <div id="result-banner" class="hidden"></div>
 
-    <!-- Command Bar -->
-    <div id="command-bar">
+    <!-- Wind Controls -->
+    <div id="wind-panel">
+        <div class="wind-title">Wind</div>
+        <div class="wind-row">
+            <label for="wind-direction">Direction</label>
+            <select id="wind-direction">
+                <option value="none">None</option>
+                <option value="headwind">Headwind</option>
+                <option value="tailwind">Tailwind</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+            </select>
+        </div>
+        <div class="wind-row">
+            <label for="wind-speed">Speed</label>
+            <input type="range" id="wind-speed" min="0" max="30" value="0" step="1">
+            <span id="wind-speed-label">0 mph</span>
+        </div>
+    </div>
+
+    <!-- Command Bar (visible in RL mode for text commands) -->
+    <div id="command-bar" class="hidden">
         <input type="text" id="command-input" placeholder='Type a command... e.g. "shoot the red target"' autocomplete="off">
         <button id="fire-btn">Fire</button>
+    </div>
+
+    <!-- Game HUD hint (visible in heuristic mode) -->
+    <div id="game-hint">
+        <span class="hint-key">CLICK</span> target to select &nbsp;&middot;&nbsp; <span class="hint-key">HOLD</span> to aim &nbsp;&middot;&nbsp; <span class="hint-key">RELEASE</span> to fire
+    </div>
+
+    <!-- Bottom toolbar -->
+    <div id="bottom-bar">
         <button id="randomize-btn">Randomize</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd/index.js"></script>
     <script src="https://unpkg.com/three@0.128.0/build/three.js"></script>
     <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="/static/js/scene.js"></script>
     <script src="/static/js/app.js"></script>
 </body>

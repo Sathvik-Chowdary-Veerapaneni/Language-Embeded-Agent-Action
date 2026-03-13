@@ -43,16 +43,20 @@ AGENT_POS = np.array([0.0, 0.0, 1.5])  # archer position in physics coords
 ARROW_ORIGIN = np.array([0.0, 0.0, 1.5])
 
 TARGET_CONFIGS = [
-    {"color": "red",    "x_range": (15, 25), "y_range": (-5, 5),   "moving": False},
-    {"color": "blue",   "x_range": (25, 35), "y_range": (-8, 8),   "moving": True},
-    {"color": "yellow", "x_range": (18, 28), "y_range": (-10, -3), "moving": False},
-    {"color": "green",  "x_range": (30, 45), "y_range": (-6, 6),   "moving": True},
-    {"color": "red",    "x_range": (35, 50), "y_range": (-4, 4),   "moving": False},
+    {"color": "red",    "x_range": (12, 18), "y_range": (-3, 3),   "moving": False, "shape": "barrel",     "severity": 1},
+    {"color": "blue",   "x_range": (20, 28), "y_range": (-6, 6),   "moving": False, "shape": "crate",      "severity": 2},
+    {"color": "yellow", "x_range": (25, 35), "y_range": (-8, 8),   "moving": True,  "shape": "scarecrow",  "severity": 3},
+    {"color": "green",  "x_range": (35, 45), "y_range": (-6, 6),   "moving": True,  "shape": "bottle",     "severity": 4},
+    {"color": "red",    "x_range": (42, 55), "y_range": (-4, 4),   "moving": False, "shape": "lantern",    "severity": 5},
 ]
 
 
+SHAPE_RADII = {
+    "barrel": 0.4, "crate": 0.45, "scarecrow": 0.35, "bottle": 0.2, "lantern": 0.25,
+}
+
 def _generate_scene():
-    """Populate the registry with 5 targets."""
+    """Populate the registry with 5 targets of varied shapes."""
     registry.clear()
     for i, cfg in enumerate(TARGET_CONFIGS):
         x = random.uniform(*cfg["x_range"])
@@ -61,12 +65,13 @@ def _generate_scene():
         vel = np.zeros(3)
         if cfg["moving"]:
             vel[1] = random.choice([-1, 1]) * random.uniform(1.5, 3.0)
+        radius = SHAPE_RADII.get(cfg["shape"], 0.5)
         registry.add_object(
             id=f"obj_{i}",
             position=[x, y, z],
             velocity=vel.tolist(),
             flag_color=cfg["color"],
-            radius=0.5,
+            radius=radius,
         )
 
 
@@ -81,7 +86,8 @@ def _physics_to_threejs(point):
 def _scene_json():
     """Build JSON-safe scene representation with Three.js coords."""
     objects = []
-    for obj in registry.get_all_active():
+    for idx, obj in enumerate(registry.get_all_active()):
+        cfg = TARGET_CONFIGS[idx] if idx < len(TARGET_CONFIGS) else {}
         objects.append({
             "id": obj.id,
             "position": _physics_to_threejs(obj.position),
@@ -89,12 +95,16 @@ def _scene_json():
             "flag_color": obj.flag_color,
             "radius": obj.radius,
             "is_moving": float(np.linalg.norm(obj.velocity)) > 0.1,
+            "shape": cfg.get("shape", "barrel"),
+            "severity": cfg.get("severity", 1),
         })
     return {"objects": objects}
 
 
-def _heuristic_aim(target_pos):
+def _heuristic_aim(target_pos, wind=None):
     """Compute pitch and yaw to hit a target using iterative search."""
+    if wind is None:
+        wind = WindModel()
     dx = target_pos[0] - ARROW_ORIGIN[0]
     dy = target_pos[1] - ARROW_ORIGIN[1]
     dz = target_pos[2] - ARROW_ORIGIN[2]
@@ -107,7 +117,7 @@ def _heuristic_aim(target_pos):
     for pitch_deg in range(1, 60):
         pitch = math.radians(pitch_deg)
         vel = compute_launch_velocity(pitch, yaw, 1.0, STANDARD_ARROW)
-        traj = simulate_trajectory(ARROW_ORIGIN.copy(), vel, STANDARD_ARROW, WindModel(), dt=0.01, max_time=5.0)
+        traj = simulate_trajectory(ARROW_ORIGIN.copy(), vel, STANDARD_ARROW, wind, dt=0.01, max_time=5.0)
 
         for pos, _ in traj:
             dist = np.linalg.norm(pos - target_pos)
@@ -151,23 +161,40 @@ def get_scene():
 @app.route("/api/fire", methods=["POST"])
 def fire():
     data = request.get_json(force=True)
+    target_id = data.get("target_id")  # Direct target selection (game mode)
     command = data.get("command", "shoot the closest target")
 
-    # Ground the command
-    resolved = pipeline.ground(command, registry, AGENT_POS)
-    if resolved is None:
-        return jsonify({"error": "Could not resolve target", "hit": False}), 200
+    if target_id:
+        # Direct target pick — bypass grounding pipeline
+        target_obj = registry.get_by_id(target_id)
+        if target_obj is None:
+            return jsonify({"error": f"Target {target_id} not found", "hit": False}), 200
+    else:
+        # NL command — use grounding pipeline
+        resolved = pipeline.ground(command, registry, AGENT_POS)
+        if resolved is None:
+            return jsonify({"error": "Could not resolve target", "hit": False}), 200
+        target_obj = resolved.target_obj
 
-    target_obj = resolved.target_obj
     target_pos = target_obj.position.copy()
 
-    # Heuristic aim
-    pitch, yaw = _heuristic_aim(target_pos)
+    # Build wind model from request
+    wind_data = data.get("wind", {})
+    wind_speed = wind_data.get("speed", 0.0)
+    wind_dir = wind_data.get("direction", [0, 0, 0])
+    wind = WindModel(
+        direction=np.array(wind_dir, dtype=float),
+        speed=float(wind_speed),
+        gust_variance=float(wind_speed) * 0.1,
+    )
+
+    # Heuristic aim (accounts for wind)
+    pitch, yaw = _heuristic_aim(target_pos, wind)
     vel = compute_launch_velocity(pitch, yaw, 1.0, STANDARD_ARROW)
 
     # Simulate
     traj = simulate_trajectory(
-        ARROW_ORIGIN.copy(), vel, STANDARD_ARROW, WindModel(), dt=0.005, max_time=5.0,
+        ARROW_ORIGIN.copy(), vel, STANDARD_ARROW, wind, dt=0.005, max_time=5.0,
     )
 
     # Check hit
