@@ -73,3 +73,80 @@ Logging to /content/leaa/rl_training/logs/ppo_moving_slow
 
 📐 VecNormalize clip_obs tightened to 10.0
   💾 Checkpoint saved: moving_slow_step_10410534.zip (success: 11.1%)
+  💾 Checkpoint saved: moving_slow_step_10460534.zip (success: 11.8%)
+------------------------------------
+| curriculum/        |             |
+|    envs            | 50          |
+|    episodes        | 102400      |
+|    stage           | 4           |
+|    stage_name      | moving_slow |
+|    success_rate    | 0.111       |
+| rollout/           |             |
+|    ep_len_mean     | 1           |
+|    ep_rew_mean     | 9.09        |
+| time/              |             |
+|    fps             | 399         |
+|    iterations      | 1           |
+|    time_elapsed    | 256         |
+|    total_timesteps | 10462884    |
+------------------------------------
+  💾 Checkpoint saved: moving_slow_step_10510534.zip (success: 12.3%)
+  💾 Checkpoint saved: moving_slow_step_10560534.zip (success: 14.6%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 50          |
+|    episodes             | 204800      |
+|    stage                | 4           |
+|    stage_name           | moving_slow |
+|    success_rate         | 0.148       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 7.66        |
+| time/                   |             |
+|    fps                  | 390         |
+|    iterations           | 2           |
+|    time_elapsed         | 524         |
+|    total_timesteps      | 10565284    |
+| train/                  |             |
+|    approx_kl            | 0.015949288 |
+|    clip_fraction        | 0.222       |
+|    clip_range           | 0.2         |
+|    entropy_loss         | 5.23        |
+|    explained_variance   | -15.3       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.252       |
+|    n_updates            | 3082        |
+|    policy_gradient_loss | 0.00996     |
+|    std                  | 0.713       |
+|    value_loss           | 0.31        |
+-----------------------------------------
+  💾 Checkpoint saved: moving_slow_step_10610534.zip (success: 19.1%)
+  💾 Checkpoint saved: moving_slow_step_10660534.zip (success: 15.8%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 50          |
+|    episodes             | 307200      |
+|    stage                | 4           |
+|    stage_name           | moving_slow |
+|    success_rate         | 0.162       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 9.22        |
+| time/                   |             |
+|    fps                  | 385         |
+|    iterations           | 3           |
+|    time_elapsed         | 797         |
+|    total_timesteps      | 10667684    |
+| train/                  |             |
+|    approx_kl            | 0.022036888 |
+|    clip_fraction        | 0.265       |
+|    clip_range           | 0.2         |
+|    entropy_loss         | 5.23        |
+|    explained_variance   | -0.357      |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.204       |
+|    n_updates            | 3087        |
+|    policy_gradient_loss | 0.000503    |
+|    std                  | 0.709       |
+|    value_loss           | 0.14        |
+-----------------------------------------
