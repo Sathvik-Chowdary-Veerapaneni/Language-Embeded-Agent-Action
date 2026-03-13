@@ -3,3 +3,9 @@
 3. better UI desgigns and objects, assets
 4. Locked Perspectie and good running of graphics
 5. Fix Colab notebook Cell 2: check for .git instead of /content/leaa existing — .env copy creates the dir before clone, causing git pull to fail on non-repo
+
+
+
+# RL Agent Tasks form End user
+1. End User can place target, at any positon in the provided enviroment, RL will try to hit th Tasks
+... user should have optionaly to place and modify the objects and right in real time, and Agent should hit that

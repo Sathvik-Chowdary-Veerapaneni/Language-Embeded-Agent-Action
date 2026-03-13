@@ -128,6 +128,29 @@ def _heuristic_aim(target_pos, wind=None):
     return best_pitch, yaw
 
 
+def _aim_from_direction(aim_dir, wind=None):
+    """Compute pitch and yaw from a Three.js aim direction vector.
+
+    The frontend sends aim_direction in Three.js coords [x, y, z].
+    Convert to physics coords [x, z, y] (swap y and z), then derive angles.
+    """
+    if wind is None:
+        wind = WindModel()
+    # Three.js [x, y, z] → physics [x, z, y]
+    dx = aim_dir["x"]
+    dy = aim_dir["z"]  # Three.js Z → physics Y
+    dz = aim_dir["y"]  # Three.js Y → physics Z
+
+    horiz = math.sqrt(dx ** 2 + dy ** 2)
+    yaw = math.atan2(dy, dx)
+    pitch = math.atan2(dz, horiz) if horiz > 1e-6 else 0.3
+
+    # Clamp pitch to reasonable range
+    pitch = max(math.radians(2), min(math.radians(55), pitch))
+
+    return pitch, yaw
+
+
 def _sample_trajectory(traj, max_points=120):
     """Downsample trajectory to at most max_points."""
     if len(traj) <= max_points:
@@ -161,22 +184,24 @@ def get_scene():
 @app.route("/api/fire", methods=["POST"])
 def fire():
     data = request.get_json(force=True)
-    target_id = data.get("target_id")  # Direct target selection (game mode)
-    command = data.get("command", "shoot the closest target")
+    target_id = data.get("target_id")  # Optional: pre-selected target
+    aim_direction = data.get("aim_direction")  # Mouse aim direction (Three.js coords)
+    command = data.get("command")  # NL command (RL mode)
 
+    # Resolve a reference target (for auto-aim or miss reporting)
+    target_obj = None
     if target_id:
-        # Direct target pick — bypass grounding pipeline
         target_obj = registry.get_by_id(target_id)
-        if target_obj is None:
-            return jsonify({"error": f"Target {target_id} not found", "hit": False}), 200
-    else:
-        # NL command — use grounding pipeline
+    if target_obj is None and command:
         resolved = pipeline.ground(command, registry, AGENT_POS)
-        if resolved is None:
-            return jsonify({"error": "Could not resolve target", "hit": False}), 200
-        target_obj = resolved.target_obj
-
-    target_pos = target_obj.position.copy()
+        if resolved:
+            target_obj = resolved.target_obj
+    # Fallback: use closest target
+    if target_obj is None:
+        all_targets = registry.get_all_active()
+        if not all_targets:
+            return jsonify({"error": "No targets in scene", "hit": False}), 200
+        target_obj = min(all_targets, key=lambda o: np.linalg.norm(o.position - ARROW_ORIGIN))
 
     # Build wind model from request
     wind_data = data.get("wind", {})
@@ -188,8 +213,12 @@ def fire():
         gust_variance=float(wind_speed) * 0.1,
     )
 
-    # Heuristic aim (accounts for wind)
-    pitch, yaw = _heuristic_aim(target_pos, wind)
+    # Compute aim: use mouse aim direction if provided, otherwise auto-aim at target
+    if aim_direction and isinstance(aim_direction, dict):
+        pitch, yaw = _aim_from_direction(aim_direction, wind)
+    else:
+        pitch, yaw = _heuristic_aim(target_obj.position.copy(), wind)
+
     vel = compute_launch_velocity(pitch, yaw, 1.0, STANDARD_ARROW)
 
     # Simulate
@@ -197,35 +226,49 @@ def fire():
         ARROW_ORIGIN.copy(), vel, STANDARD_ARROW, wind, dt=0.005, max_time=5.0,
     )
 
-    # Check hit
-    collision_target = Target(
-        id=target_obj.id,
-        position=target_obj.position.copy(),
-        radius=target_obj.radius,
-    )
-    hit, hit_pos, dist_from_center = check_hit(traj, collision_target)
+    # Check hit against ALL targets
+    hit = False
+    hit_pos = None
+    hit_target = None
+    closest_target = None
+    closest_dist = float("inf")
+    for obj in registry.get_all_active():
+        collision_target = Target(
+            id=obj.id,
+            position=obj.position.copy(),
+            radius=obj.radius,
+        )
+        obj_hit, obj_hit_pos, obj_dist = check_hit(traj, collision_target)
+        if obj_hit:
+            hit = True
+            hit_pos = obj_hit_pos
+            hit_target = obj
+            break
+        if obj_dist is not None and obj_dist < closest_dist:
+            closest_dist = obj_dist
+            closest_target = obj
 
     # Sample trajectory for frontend
     sampled = _sample_trajectory(traj, max_points=120)
     trajectory_points = [_physics_to_threejs(pos) for pos, _ in sampled]
 
-    # Distance from archer to target
-    target_distance = float(np.linalg.norm(target_pos - ARROW_ORIGIN))
-
     if hit:
-        result_text = f"Hit {target_obj.flag_color} target ({target_obj.id}) at {target_distance:.1f}m!"
+        target_distance = float(np.linalg.norm(hit_target.position - ARROW_ORIGIN))
+        result_text = f"Hit {hit_target.flag_color} target ({hit_target.id}) at {target_distance:.1f}m!"
+        resp_target = hit_target
     else:
-        miss_dist = dist_from_center if dist_from_center is not None else 999
-        result_text = f"Missed {target_obj.flag_color} target by {miss_dist:.2f}m"
+        resp_target = closest_target or target_obj
+        target_distance = float(np.linalg.norm(resp_target.position - ARROW_ORIGIN))
+        result_text = f"Missed! Nearest was {resp_target.flag_color} target by {closest_dist:.2f}m"
 
     return jsonify({
-        "target_id": target_obj.id,
+        "target_id": resp_target.id,
         "hit": hit,
         "trajectory_points": trajectory_points,
-        "target_position": _physics_to_threejs(target_pos),
+        "target_position": _physics_to_threejs(resp_target.position),
         "result_text": result_text,
         "distance": target_distance,
-        "flag_color": target_obj.flag_color,
+        "flag_color": resp_target.flag_color,
     })
 
 

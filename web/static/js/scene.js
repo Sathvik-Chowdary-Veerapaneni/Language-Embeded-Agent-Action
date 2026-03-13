@@ -37,8 +37,24 @@ class ArcheryScene {
         this._aimPitch = 0;         // vertical offset from mouse
         this._aimMouseStart = null; // { x, y } when aim mode started
 
+        // Cinematic arrow-follow camera
+        this._arrowCamActive = false;      // true while following arrow
+        this._arrowCamHolding = false;     // true during impact hold
+        this._arrowCamHoldStart = 0;       // timestamp when hold started
+        this._arrowCamReturnLerp = 0;      // 0→1 lerp back to default after hold
+        this._arrowCamReturning = false;   // true during return-to-default
+        this._arrowCamLastPos = null;      // last camera pos during follow (for smooth return)
+        this._arrowCamLastTarget = null;   // last lookAt target during follow
+
         // GLB model cache
         this._glbModels = {};
+
+        // Screen shake state
+        this._screenShake = 0;
+        this._screenShakeDecay = 0;
+
+        // Ambient dust particles
+        this._dustParticles = null;
 
         this._initRenderer();
         this._initCamera();
@@ -46,6 +62,7 @@ class ArcheryScene {
         this._buildEnvironment();
         this._buildArcher();
         this._loadGLBProps();
+        this._createAmbientDust();
         this.animate();
     }
 
@@ -447,6 +464,41 @@ class ArcheryScene {
             rockGroup.position.set(pos[0], s * 0.25, pos[2]);
             this.scene.add(rockGroup);
         });
+    }
+
+    // -------------------------------------------------------------------
+    // Ambient dust motes — floating particles in sunlight
+    // -------------------------------------------------------------------
+
+    _createAmbientDust() {
+        const count = 200;
+        const geo = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+        const opacities = new Float32Array(count);
+
+        for (let i = 0; i < count; i++) {
+            positions[i * 3]     = (Math.random() - 0.3) * 80;     // X spread
+            positions[i * 3 + 1] = 0.5 + Math.random() * 6;        // Y height
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 30;     // Z spread
+            sizes[i] = 0.03 + Math.random() * 0.06;
+            opacities[i] = 0.2 + Math.random() * 0.4;
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const mat = new THREE.PointsMaterial({
+            color: 0xffe8b0,
+            size: 0.08,
+            transparent: true,
+            opacity: 0.35,
+            sizeAttenuation: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+        });
+
+        this._dustParticles = new THREE.Points(geo, mat);
+        this._dustParticleData = { positions, sizes, opacities, count };
+        this.scene.add(this._dustParticles);
     }
 
     // -------------------------------------------------------------------
@@ -1152,9 +1204,9 @@ class ArcheryScene {
         const dy = e.clientY - this._aimMouseStart.y;
 
         // Sensitivity: pixels to radians (lower = more precise)
-        const sensitivity = 0.003;
-        const maxYaw = 0.6;    // max ~35 degrees horizontal
-        const maxPitch = 0.35; // max ~20 degrees vertical
+        const sensitivity = 0.002;
+        const maxYaw = 0.5;    // max ~30 degrees horizontal (forward arc only)
+        const maxPitch = 0.25; // max ~15 degrees vertical
 
         this._aimYaw = Math.max(-maxYaw, Math.min(maxYaw, dx * sensitivity));
         this._aimPitch = Math.max(-maxPitch, Math.min(maxPitch, -dy * sensitivity)); // invert Y
@@ -1162,14 +1214,16 @@ class ArcheryScene {
 
     getAimDirection() {
         // Returns the aim direction vector based on current mouse offset
-        // Base direction: from aim camera position toward aim target
-        const baseDir = new THREE.Vector3().subVectors(this._cameraAim.target, this._cameraAim.pos).normalize();
+        // Compute from the actual offset look-at target (matches what the camera sees)
+        const aimYaw = this._aimYaw || 0;
+        const aimPitch = this._aimPitch || 0;
 
-        // Apply yaw (horizontal) and pitch (vertical) rotations
-        const euler = new THREE.Euler(this._aimPitch, -this._aimYaw, 0, 'YXZ');
-        baseDir.applyEuler(euler);
+        const lookTarget = this._cameraAim.target.clone();
+        lookTarget.z += aimYaw * 12;
+        lookTarget.y += aimPitch * 8;
 
-        return baseDir;
+        const dir = new THREE.Vector3().subVectors(lookTarget, this._cameraAim.pos).normalize();
+        return dir;
     }
 
     _updateAimPower() {
@@ -1239,6 +1293,15 @@ class ArcheryScene {
         this.animatingArrow = true;
 
         if (fromAimMode) {
+            // Activate cinematic arrow-follow camera
+            this._arrowCamActive = true;
+            this._arrowCamHolding = false;
+            this._arrowCamReturning = false;
+            this._arrowCamReturnLerp = 0;
+            // Stop the aim→default zoom-out so arrow cam takes over
+            this._cameraLerpDir = 0;
+            this._cameraLerp = 0;
+
             // Already in draw pose from aim mode — launch immediately, then return to idle
             this._launchArrowMesh(trajectoryPoints, () => {
                 if (this.actions && this.actions['idle']) {
@@ -1278,6 +1341,8 @@ class ArcheryScene {
     _launchArrowMesh(trajectoryPoints, onComplete) {
         if (this.arrowMesh) this.scene.remove(this.arrowMesh);
         if (this.trailLine) this.scene.remove(this.trailLine);
+        if (this._trailGlow) this.scene.remove(this._trailGlow);
+        this._trailGlow = null;
         // Clean up old trail dots
         if (this._trailDots) {
             this._trailDots.forEach(d => this.scene.remove(d));
@@ -1292,88 +1357,164 @@ class ArcheryScene {
         );
         this.scene.add(this.arrowMesh);
 
-        // Black dotted chain trail — we place dot meshes every N points
-        const DOT_INTERVAL = 3;         // place a dot every 3 trajectory points
-        const MAX_VISIBLE_DOTS = 4;     // only keep last 4 dots visible (fade chain)
+        // Glowing streak trail behind arrow
+        const TRAIL_LENGTH = 12;        // number of recent positions to keep in trail
+        const trailPositions = [];      // ring buffer of recent arrow positions
 
         const totalPoints = trajectoryPoints.length;
-        const duration = Math.min(totalPoints * 12, 2500);
+        const baseDuration = Math.min(totalPoints * 12, 2500);
         let startTime = null;
         let currentIndex = 0;
-        let dotCounter = 0;
 
         const animateStep = (timestamp) => {
             if (!startTime) startTime = timestamp;
             const elapsed = timestamp - startTime;
-            const progress = Math.min(elapsed / duration, 1.0);
+
+            // Slow-motion in last 20% of flight for dramatic impact
+            let progress;
+            const rawProgress = Math.min(elapsed / baseDuration, 1.0);
+            if (rawProgress > 0.8) {
+                // Ease into slow-mo: last 20% takes 2x longer visually
+                const slowPart = (rawProgress - 0.8) / 0.2; // 0→1 within slow zone
+                const eased = slowPart * slowPart; // quadratic ease-in (decelerates)
+                progress = 0.8 + eased * 0.2;
+            } else {
+                progress = rawProgress;
+            }
             const targetIndex = Math.min(Math.floor(progress * totalPoints), totalPoints - 1);
 
-            // Place trail dots as arrow advances
+            // Advance current index
             while (currentIndex <= targetIndex && currentIndex < totalPoints) {
-                dotCounter++;
-                if (dotCounter % DOT_INTERVAL === 0) {
-                    const dpt = trajectoryPoints[currentIndex];
-                    const dot = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.025, 6, 4),
-                        new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.9 })
-                    );
-                    dot.position.set(dpt[0], dpt[1], dpt[2]);
-                    dot._birthTime = timestamp;
-                    this.scene.add(dot);
-                    this._trailDots.push(dot);
-                }
                 currentIndex++;
             }
 
-            // Fade: only keep the last MAX_VISIBLE_DOTS fully opaque, older ones fade out
-            const dotCount = this._trailDots.length;
-            for (let i = 0; i < dotCount; i++) {
-                const age = dotCount - 1 - i; // 0 = newest
-                if (age < MAX_VISIBLE_DOTS) {
-                    // Chain fade: newest = 0.9, oldest visible = 0.25
-                    this._trailDots[i].material.opacity = 0.9 - (age / MAX_VISIBLE_DOTS) * 0.65;
-                    this._trailDots[i].visible = true;
-                } else {
-                    this._trailDots[i].material.opacity = 0;
-                    this._trailDots[i].visible = false;
-                }
-            }
+            // Track recent positions for streak trail
+            const pt = trajectoryPoints[targetIndex];
+            trailPositions.push([pt[0], pt[1], pt[2]]);
+            if (trailPositions.length > TRAIL_LENGTH) trailPositions.shift();
 
-            // Also connect the visible dots with thin black lines
+            // Draw glowing streak trail
             if (this.trailLine) this.scene.remove(this.trailLine);
-            const visibleDots = this._trailDots.slice(-MAX_VISIBLE_DOTS);
-            if (visibleDots.length >= 2) {
-                const linePositions = [];
-                visibleDots.forEach(d => linePositions.push(d.position.x, d.position.y, d.position.z));
+            if (this._trailGlow) this.scene.remove(this._trailGlow);
+
+            if (trailPositions.length >= 2) {
+                const lineVerts = [];
+                trailPositions.forEach(p => lineVerts.push(p[0], p[1], p[2]));
                 const lineGeo = new THREE.BufferGeometry();
-                lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+                lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(lineVerts, 3));
+
+                // Inner bright core
                 this.trailLine = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({
-                    color: 0x111111, transparent: true, opacity: 0.4,
+                    color: 0xffcc44, transparent: true, opacity: 0.8,
+                    linewidth: 2,
                 }));
                 this.scene.add(this.trailLine);
+
+                // Outer glow (wider, dimmer)
+                const glowGeo = lineGeo.clone();
+                this._trailGlow = new THREE.Line(glowGeo, new THREE.LineBasicMaterial({
+                    color: 0xff6600, transparent: true, opacity: 0.3,
+                    linewidth: 4,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                }));
+                this.scene.add(this._trailGlow);
             }
 
-            const pt = trajectoryPoints[targetIndex];
+            // Spawn fading embers along trail every few frames
+            if (currentIndex % 4 === 0 && progress < 0.95) {
+                const ember = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.015, 4, 3),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xff8833, transparent: true, opacity: 0.7,
+                        blending: THREE.AdditiveBlending, depthWrite: false,
+                    })
+                );
+                ember.position.set(pt[0], pt[1], pt[2]);
+                ember._birthTime = timestamp;
+                this.scene.add(ember);
+                this._trailDots.push(ember);
+            }
+
+            // Fade old ember dots
+            for (let i = this._trailDots.length - 1; i >= 0; i--) {
+                const age = (timestamp - this._trailDots[i]._birthTime) / 600;
+                if (age > 1) {
+                    this.scene.remove(this._trailDots[i]);
+                    this._trailDots.splice(i, 1);
+                } else {
+                    this._trailDots[i].material.opacity = 0.7 * (1 - age);
+                    this._trailDots[i].scale.setScalar(1 + age * 2);
+                }
+            }
+
             this.arrowMesh.position.set(pt[0], pt[1], pt[2]);
 
+            // Arrow flight direction for orientation
+            let flightDir = null;
             if (targetIndex < totalPoints - 1) {
                 const next = trajectoryPoints[Math.min(targetIndex + 1, totalPoints - 1)];
-                const dir = new THREE.Vector3(
+                flightDir = new THREE.Vector3(
                     next[0] - pt[0], next[1] - pt[1], next[2] - pt[2]
                 ).normalize();
-                if (dir.length() > 0.001) {
+                if (flightDir.length() > 0.001) {
                     const axis = new THREE.Vector3(1, 0, 0);
                     this.arrowMesh.quaternion.copy(
-                        new THREE.Quaternion().setFromUnitVectors(axis, dir)
+                        new THREE.Quaternion().setFromUnitVectors(axis, flightDir)
                     );
                 }
+            }
+
+            // --- Cinematic arrow-follow camera ---
+            if (this._arrowCamActive && !this._arrowCamHolding) {
+                const arrowPos = new THREE.Vector3(pt[0], pt[1], pt[2]);
+                const dir = flightDir || new THREE.Vector3(1, 0, 0);
+
+                // Camera offset: behind the arrow, slightly above and to the side
+                // Blend from close-behind (launch) to further-behind (mid-flight)
+                const followDist = 2.5 + progress * 3.0;    // 2.5 → 5.5m behind
+                const heightOffset = 0.8 + progress * 0.5;  // rise slightly during flight
+                const sideOffset = -0.6;                     // left of arrow path
+
+                // Compute right vector for side offset
+                const up = new THREE.Vector3(0, 1, 0);
+                const right = new THREE.Vector3().crossVectors(dir, up).normalize();
+
+                const camTarget = arrowPos.clone().add(dir.clone().multiplyScalar(3.0)); // look ahead of arrow
+                const camPos = arrowPos.clone()
+                    .sub(dir.clone().multiplyScalar(followDist))
+                    .add(new THREE.Vector3(0, heightOffset, 0))
+                    .add(right.clone().multiplyScalar(sideOffset));
+
+                // Smooth camera with lerp to avoid jitter
+                if (this._arrowCamLastPos) {
+                    const smoothing = 0.12;
+                    camPos.lerp(this._arrowCamLastPos, 1.0 - smoothing);
+                    camTarget.lerp(this._arrowCamLastTarget, 1.0 - smoothing);
+                }
+
+                this.camera.position.copy(camPos);
+                this.camera.lookAt(camTarget);
+                this.camera.fov = 50 - progress * 8; // slight zoom as it approaches
+                this.camera.updateProjectionMatrix();
+
+                this._arrowCamLastPos = camPos.clone();
+                this._arrowCamLastTarget = camTarget.clone();
             }
 
             if (progress < 1.0) {
                 requestAnimationFrame(animateStep);
             } else {
                 this._spawnImpactParticles(pt);
-                // Clean up trail dots after a short delay
+
+                // Start impact hold if arrow cam is active
+                if (this._arrowCamActive) {
+                    this._arrowCamHolding = true;
+                    this._arrowCamHoldStart = performance.now();
+                    this._startImpactHold(pt);
+                }
+
+                // Clean up trail after a short delay
                 setTimeout(() => {
                     if (this._trailDots) {
                         this._trailDots.forEach(d => this.scene.remove(d));
@@ -1382,6 +1523,10 @@ class ArcheryScene {
                     if (this.trailLine) {
                         this.scene.remove(this.trailLine);
                         this.trailLine = null;
+                    }
+                    if (this._trailGlow) {
+                        this.scene.remove(this._trailGlow);
+                        this._trailGlow = null;
                     }
                 }, 800);
                 this.animatingArrow = false;
@@ -1392,23 +1537,145 @@ class ArcheryScene {
     }
 
     _spawnImpactParticles(position) {
-        for (let i = 0; i < 15; i++) {
-            const geo = new THREE.SphereGeometry(0.02 + Math.random() * 0.04, 6, 4);
-            const mat = new THREE.MeshBasicMaterial({ flatShading: true,
-                color: new THREE.Color().setHSL(0.06 + Math.random() * 0.08, 0.7, 0.55),
+        const impactPos = new THREE.Vector3(position[0], position[1], position[2]);
+
+        // --- Screen shake ---
+        this._screenShake = 0.15;
+        this._screenShakeDecay = 0.92;
+
+        // --- Spark particles (fast, bright, short-lived) ---
+        for (let i = 0; i < 20; i++) {
+            const geo = new THREE.SphereGeometry(0.012 + Math.random() * 0.02, 4, 3);
+            const mat = new THREE.MeshBasicMaterial({
+                color: new THREE.Color().setHSL(0.08 + Math.random() * 0.06, 0.9, 0.7),
                 transparent: true, opacity: 1,
+                blending: THREE.AdditiveBlending, depthWrite: false,
             });
             const p = new THREE.Mesh(geo, mat);
-            p.position.set(position[0], position[1], position[2]);
+            p.position.copy(impactPos);
             p._vel = new THREE.Vector3(
-                (Math.random() - 0.5) * 4,
-                Math.random() * 4 + 1,
-                (Math.random() - 0.5) * 4
+                (Math.random() - 0.5) * 6,
+                Math.random() * 5 + 2,
+                (Math.random() - 0.5) * 6
             );
-            p._life = 1.0;
+            p._life = 0.6 + Math.random() * 0.4;
             this.scene.add(p);
             this.particles.push(p);
         }
+
+        // --- Dust/debris particles (slow, brownish, longer-lived) ---
+        for (let i = 0; i < 12; i++) {
+            const s = 0.02 + Math.random() * 0.06;
+            const geo = new THREE.DodecahedronGeometry(s, 0);
+            const mat = new THREE.MeshStandardMaterial({
+                color: new THREE.Color().setHSL(0.08, 0.3 + Math.random() * 0.2, 0.35 + Math.random() * 0.15),
+                transparent: true, opacity: 0.8,
+                roughness: 1, metalness: 0,
+            });
+            const p = new THREE.Mesh(geo, mat);
+            p.position.copy(impactPos);
+            p._vel = new THREE.Vector3(
+                (Math.random() - 0.5) * 2.5,
+                Math.random() * 3 + 0.5,
+                (Math.random() - 0.5) * 2.5
+            );
+            p._life = 1.2 + Math.random() * 0.8;
+            p._spin = new THREE.Vector3(
+                (Math.random() - 0.5) * 8,
+                (Math.random() - 0.5) * 8,
+                (Math.random() - 0.5) * 8
+            );
+            this.scene.add(p);
+            this.particles.push(p);
+        }
+
+        // --- Shockwave ring (expanding, fading ring on the ground) ---
+        const ringGeo = new THREE.RingGeometry(0.1, 0.25, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xffaa44, transparent: true, opacity: 0.6,
+            side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.position.copy(impactPos);
+        ring.rotation.x = -Math.PI / 2;
+        ring._life = 1.0;
+        ring._isShockwave = true;
+        this.scene.add(ring);
+        this.particles.push(ring);
+
+        // --- Impact flash (brief bright light at impact point) ---
+        const flash = new THREE.PointLight(0xffaa33, 3, 8);
+        flash.position.copy(impactPos);
+        flash._life = 0.4;
+        flash._isFlash = true;
+        this.scene.add(flash);
+        this.particles.push(flash);
+    }
+
+    // -------------------------------------------------------------------
+    // Cinematic camera — impact hold + return to default
+    // -------------------------------------------------------------------
+
+    _startImpactHold(impactPoint) {
+        // Orbit slowly around impact point during hold
+        const impactPos = new THREE.Vector3(impactPoint[0], impactPoint[1], impactPoint[2]);
+        const holdDuration = 1200; // ms to hold on impact
+        const returnDuration = 1500; // ms to return to default camera
+
+        const orbitStep = (timestamp) => {
+            const elapsed = timestamp - this._arrowCamHoldStart;
+
+            if (elapsed < holdDuration) {
+                // Slow orbit around impact point
+                const angle = (elapsed / holdDuration) * 0.4; // small arc
+                const radius = 3.0;
+                const camPos = new THREE.Vector3(
+                    impactPos.x - radius * Math.cos(angle),
+                    impactPos.y + 1.2,
+                    impactPos.z + radius * Math.sin(angle)
+                );
+                this.camera.position.copy(camPos);
+                this.camera.lookAt(impactPos);
+                this.camera.fov = 42;
+                this.camera.updateProjectionMatrix();
+                this._arrowCamLastPos = camPos.clone();
+                this._arrowCamLastTarget = impactPos.clone();
+                requestAnimationFrame(orbitStep);
+            } else {
+                // Transition back to default camera
+                this._arrowCamHolding = false;
+                this._arrowCamReturning = true;
+                this._arrowCamReturnLerp = 0;
+                const returnStart = performance.now();
+                const startPos = this._arrowCamLastPos.clone();
+                const startTarget = this._arrowCamLastTarget.clone();
+                const startFov = 42;
+
+                const returnStep = (ts) => {
+                    const t = Math.min((ts - returnStart) / returnDuration, 1.0);
+                    // Smoothstep easing
+                    const s = t * t * (3 - 2 * t);
+
+                    this.camera.position.lerpVectors(startPos, this._cameraDefault.pos, s);
+                    const lookTarget = new THREE.Vector3().lerpVectors(startTarget, this._cameraDefault.target, s);
+                    this.camera.lookAt(lookTarget);
+                    this.camera.fov = startFov + (45 - startFov) * s;
+                    this.camera.updateProjectionMatrix();
+
+                    if (t < 1.0) {
+                        requestAnimationFrame(returnStep);
+                    } else {
+                        // Fully returned to default
+                        this._arrowCamActive = false;
+                        this._arrowCamReturning = false;
+                        this._arrowCamLastPos = null;
+                        this._arrowCamLastTarget = null;
+                    }
+                };
+                requestAnimationFrame(returnStep);
+            }
+        };
+        requestAnimationFrame(orbitStep);
     }
 
     // -------------------------------------------------------------------
@@ -1424,13 +1691,20 @@ class ArcheryScene {
             this.mixer.update(dt);
         }
 
-        // Camera lerp for aim mode
+        // Camera lerp (transition between default and aim positions)
         if (this._cameraLerpDir !== 0) {
-            const lerpSpeed = 2.5; // lerp speed (higher = faster zoom)
+            const lerpSpeed = 2.5;
             this._cameraLerp += this._cameraLerpDir * dt * lerpSpeed;
             this._cameraLerp = Math.max(0, Math.min(1, this._cameraLerp));
 
-            // Smooth easing (ease in-out)
+            if (this._cameraLerp <= 0 || this._cameraLerp >= 1) {
+                this._cameraLerpDir = 0;
+            }
+        }
+
+        // Update camera position/look-at whenever lerp is not at default (0)
+        // Skip if arrow-follow camera is active (it handles camera independently)
+        if (this._cameraLerp > 0 && !this._arrowCamActive && !this._arrowCamReturning) {
             const t = this._cameraLerp * this._cameraLerp * (3 - 2 * this._cameraLerp);
 
             const posX = this._cameraDefault.pos.x + (this._cameraAim.pos.x - this._cameraDefault.pos.x) * t;
@@ -1438,30 +1712,25 @@ class ArcheryScene {
             const posZ = this._cameraDefault.pos.z + (this._cameraAim.pos.z - this._cameraDefault.pos.z) * t;
             this.camera.position.set(posX, posY, posZ);
 
-            // Apply mouse-look offset when in aim mode (scale by t so it blends in)
-            const aimOffsetYaw = (this._aimYaw || 0) * t;
-            const aimOffsetPitch = (this._aimPitch || 0) * t;
+            // Mouse-look offset — only apply forward-facing aim (no turning back)
+            const aimYaw = this._aimYaw || 0;
+            const aimPitch = this._aimPitch || 0;
 
             const tgtX = this._cameraDefault.target.x + (this._cameraAim.target.x - this._cameraDefault.target.x) * t;
             const tgtY = this._cameraDefault.target.y + (this._cameraAim.target.y - this._cameraDefault.target.y) * t;
             const tgtZ = this._cameraDefault.target.z + (this._cameraAim.target.z - this._cameraDefault.target.z) * t;
 
             // Offset the look-at target based on mouse movement
+            // Z offset uses aimYaw to sweep horizontally across the field
             const lookTarget = new THREE.Vector3(tgtX, tgtY, tgtZ);
-            lookTarget.x += aimOffsetYaw * 15;   // horizontal: yaw moves target left/right
-            lookTarget.y += aimOffsetPitch * 10;  // vertical: pitch moves target up/down
-            lookTarget.z += aimOffsetYaw * -5;    // slight Z offset for depth feel
+            lookTarget.z += aimYaw * 12;          // horizontal sweep (left/right across field)
+            lookTarget.y += aimPitch * 8;          // vertical aim (up/down)
 
             this.camera.lookAt(lookTarget);
 
-            // Narrow FOV as we zoom in for scope feel
+            // Narrow FOV for scope feel
             this.camera.fov = 45 - 15 * t;
             this.camera.updateProjectionMatrix();
-
-            // Stop lerping when we reach the ends
-            if (this._cameraLerp <= 0 || this._cameraLerp >= 1) {
-                this._cameraLerpDir = 0;
-            }
         }
 
         // Update aim power while holding
@@ -1520,7 +1789,7 @@ class ArcheryScene {
             }
         });
 
-        // Particles
+        // Particles — handle different types
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
             p._life -= dt * 1.5;
@@ -1529,10 +1798,58 @@ class ArcheryScene {
                 this.particles.splice(i, 1);
                 continue;
             }
-            p.position.add(p._vel.clone().multiplyScalar(dt));
-            p._vel.y -= 9.8 * dt;
-            p.material.opacity = p._life;
-            p.scale.setScalar(p._life);
+
+            if (p._isShockwave) {
+                // Expanding ring
+                const scale = 1 + (1 - p._life) * 8;
+                p.scale.setScalar(scale);
+                p.material.opacity = p._life * 0.6;
+            } else if (p._isFlash) {
+                // Fading point light
+                p.intensity = p._life * 3;
+            } else {
+                // Regular particle (spark or debris)
+                p.position.add(p._vel.clone().multiplyScalar(dt));
+                p._vel.y -= 9.8 * dt;
+                // Apply spin for debris
+                if (p._spin) {
+                    p.rotation.x += p._spin.x * dt;
+                    p.rotation.y += p._spin.y * dt;
+                    p.rotation.z += p._spin.z * dt;
+                }
+                if (p.material) {
+                    p.material.opacity = Math.min(p._life, 1);
+                }
+                p.scale.setScalar(0.5 + p._life * 0.5);
+            }
+        }
+
+        // Ambient dust motes — gentle floating motion
+        if (this._dustParticles) {
+            const dustPos = this._dustParticles.geometry.attributes.position;
+            for (let i = 0; i < this._dustParticleData.count; i++) {
+                let x = dustPos.getX(i);
+                let y = dustPos.getY(i);
+                let z = dustPos.getZ(i);
+                // Gentle drift
+                x += Math.sin(time * 0.3 + i * 0.7) * 0.003;
+                y += Math.sin(time * 0.5 + i * 1.1) * 0.002;
+                z += Math.cos(time * 0.4 + i * 0.9) * 0.003;
+                // Wrap around
+                if (y > 7) y = 0.5;
+                if (y < 0.3) y = 6;
+                dustPos.setXYZ(i, x, y, z);
+            }
+            dustPos.needsUpdate = true;
+            // Pulse opacity gently
+            this._dustParticles.material.opacity = 0.25 + Math.sin(time * 0.8) * 0.1;
+        }
+
+        // Screen shake
+        if (this._screenShake > 0.001 && !this._arrowCamActive && !this._arrowCamReturning) {
+            this.camera.position.x += (Math.random() - 0.5) * this._screenShake;
+            this.camera.position.y += (Math.random() - 0.5) * this._screenShake * 0.6;
+            this._screenShake *= this._screenShakeDecay;
         }
 
         this.renderer.render(this.scene, this.camera);

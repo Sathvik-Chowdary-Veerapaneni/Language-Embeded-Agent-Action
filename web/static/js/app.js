@@ -78,17 +78,9 @@
             if (e.target.closest('#wind-panel, #mode-toggle, #hud, #bottom-bar, #command-bar, #game-hint, button, input, select, label')) return;
             if (firing || currentMode !== 'heuristic') return;
 
-            // Raycast to pick a target
-            const pickedId = scene.pickTarget(e);
-            if (!pickedId) {
-                showBanner('Click on a target to select it!', false);
-                return;
-            }
-
-            // Select and start aiming
-            selectedTargetId = pickedId;
-            scene.selectTarget(pickedId);
+            // Click anywhere on the scene to start aiming — no target selection needed
             isMouseAiming = true;
+            selectedTargetId = null; // aim-direction based, no pre-selected target
             scene.enterAimMode();
             e.preventDefault();
         });
@@ -122,7 +114,7 @@
     // -----------------------------------------------------------------------
 
     function doFireGame() {
-        if (firing || !selectedTargetId) {
+        if (firing) {
             scene.exitAimMode();
             return;
         }
@@ -135,14 +127,17 @@
         hideBanner();
         scene.exitAimMode();
 
+        const body = {
+            wind: getWindParams(),
+            aim_direction: aimData,
+        };
+        // Include target_id only if one was selected
+        if (selectedTargetId) body.target_id = selectedTargetId;
+
         fetch('/api/fire', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                target_id: selectedTargetId,
-                wind: getWindParams(),
-                aim_direction: aimData,
-            }),
+            body: JSON.stringify(body),
         })
             .then(r => r.json())
             .then(data => {
