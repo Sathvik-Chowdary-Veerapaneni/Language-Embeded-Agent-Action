@@ -124,8 +124,13 @@ def _sample_trajectory(traj, max_points=120):
         return traj
     step = max(1, len(traj) // max_points)
     sampled = traj[::step]
-    if traj[-1] not in sampled:
+    
+    # Check if the very last item of the original trajectory is the same object 
+    # reference as the very last item of the sampled trajectory. 
+    # If not, append it to guarantee we reach the target point.
+    if sampled[-1] is not traj[-1]:
         sampled.append(traj[-1])
+        
     return sampled
 
 

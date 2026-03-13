@@ -331,450 +331,61 @@ class ArcheryScene {
     // -------------------------------------------------------------------
 
     _buildArcher() {
-        const group = new THREE.Group();
-        const S = 6; // segment count for low-poly geometry
+        // Prepare the bowGroup placeholder so any legacy reference to this.bowGroup doesn't crash
+        this.bowGroup = new THREE.Group();
+        this.scene.add(this.bowGroup);
 
-        // PBR Materials
-        const skinMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0xffdcb3, roughness: 0.8, metalness: 0.1
-        });
-        const tunicMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0xf2f2f2, roughness: 0.9, metalness: 0.1
-        });
-        const leatherMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0x222222, roughness: 0.6, metalness: 0.2
-        });
-        const bootMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0xffffff, roughness: 0.8, metalness: 0.1
-        });
-        const pantsMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0xf2f2f2, roughness: 0.9, metalness: 0.1
-        });
-        const hairMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0x3d2314, roughness: 0.9, metalness: 0.1
-        });
-        const metalMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0x999999, roughness: 0.3, metalness: 0.7
-        });
-        const goldMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0xcccccc, roughness: 0.3, metalness: 0.8
-        });
-        const woodMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0x6b3a1f, roughness: 0.7, metalness: 0.05
-        });
-
-        // --- Boots ---
-        for (let side = -1; side <= 1; side += 2) {
-            // Boot shaft
-            const bootShaft = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.065, 0.07, 0.25, S), bootMat
-            );
-            bootShaft.position.set(0, 0.14, side * 0.11);
-            bootShaft.castShadow = true;
-            group.add(bootShaft);
-
-            // Boot toe
-            const toe = new THREE.Mesh(
-                new THREE.SphereGeometry(0.07, S, S / 2, 0, Math.PI * 2, 0, Math.PI / 2), bootMat
-            );
-            toe.rotation.x = Math.PI / 2;
-            toe.position.set(0.06, 0.02, side * 0.11);
-            group.add(toe);
-
-            // Boot sole
-            const sole = new THREE.Mesh(
-                new THREE.BoxGeometry(0.16, 0.03, 0.14), bootMat
-            );
-            sole.position.set(0.02, 0.015, side * 0.11);
-            group.add(sole);
-        }
-
-        // --- Legs ---
-        for (let side = -1; side <= 1; side += 2) {
-            // Shin
-            const shin = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.05, 0.06, 0.38, S), pantsMat
-            );
-            shin.position.set(0, 0.46, side * 0.11);
-            shin.castShadow = true;
-            group.add(shin);
-
-            // Knee joint
-            const knee = new THREE.Mesh(
-                new THREE.SphereGeometry(0.055, S, S), pantsMat
-            );
-            knee.position.set(0, 0.63, side * 0.11);
-            group.add(knee);
-
-            // Thigh
-            const thigh = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.065, 0.055, 0.32, S), pantsMat
-            );
-            thigh.position.set(0, 0.8, side * 0.11);
-            thigh.castShadow = true;
-            group.add(thigh);
-        }
-
-        // --- Hips ---
-        const hips = new THREE.Mesh(
-            new THREE.SphereGeometry(0.2, S, S), pantsMat
-        );
-        hips.scale.set(1, 0.55, 0.85);
-        hips.position.set(0, 0.92, 0);
-        group.add(hips);
-
-        // --- Torso (built from multiple smooth shapes) ---
-        // Lower torso / waist
+        const loader = new THREE.FBXLoader();
         
-        const shirtMat = new THREE.MeshStandardMaterial({ flatShading: true, color: 0xe86a33, roughness: 0.9, metalness: 0.1 });
-        const waist = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.17, 0.2, 0.25, S), shirtMat
-        );
-        waist.position.set(0, 1.08, 0);
-        waist.castShadow = true;
-        group.add(waist);
+        // Load Character
+        loader.load('/static/models/X Bot.fbx', (object) => {
+            this.archerGroup = object;
+            
+            object.scale.set(0.012, 0.012, 0.012);
+            object.position.set(0, 0, 0);
+            
+            // Cast shadows
+            object.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    if (child.material) {
+                        // Ensure materials are somewhat reflective PBR if missing
+                        child.material.roughness = 0.5;
+                        child.material.metalness = 0.1;
+                    }
+                }
+            });
 
-        // Mid torso
-        const midTorso = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.2, 0.17, 0.3, S), tunicMat
-        );
-        midTorso.position.set(0, 1.3, 0);
-        midTorso.castShadow = true;
-        group.add(midTorso);
+            this.scene.add(object);
 
-        // Chest
-        const chest = new THREE.Mesh(
-            new THREE.SphereGeometry(0.21, S, S), tunicMat
-        );
-        chest.scale.set(1, 0.75, 0.85);
-        chest.position.set(0, 1.48, 0);
-        chest.castShadow = true;
-        group.add(chest);
+            // Setup Animations
+            this.mixer = new THREE.AnimationMixer(object);
+            this.actions = {};
+            
+            // Load Idle Animation
+            loader.load('/static/models/standing idle 01.fbx', (anim) => {
+                const idleAction = this.mixer.clipAction(anim.animations[0]);
+                idleAction.play();
+                this.actions['idle'] = idleAction;
+                this.activeAction = idleAction;
+            });
+            
+            // Load Firing Animations (Pre-load for later)
+            loader.load('/static/models/standing draw arrow.fbx', (anim) => {
+                const drawAction = this.mixer.clipAction(anim.animations[0]);
+                drawAction.clampWhenFinished = true;
+                this.actions['draw'] = drawAction;
+            });
+            
+            loader.load('/static/models/standing aim overdraw.fbx', (anim) => {
+                const overdrawAction = this.mixer.clipAction(anim.animations[0]);
+                this.actions['overdraw'] = overdrawAction;
+            });
 
-        // --- Belt ---
-        const belt = new THREE.Mesh(
-            new THREE.TorusGeometry(0.19, 0.025, S, S), leatherMat
-        );
-        belt.rotation.x = Math.PI / 2;
-        belt.position.set(0, 0.95, 0);
-        group.add(belt);
-
-        // Belt buckle
-        const buckle = new THREE.Mesh(
-            new THREE.BoxGeometry(0.05, 0.05, 0.015), goldMat
-        );
-        buckle.position.set(0.2, 0.95, 0);
-        group.add(buckle);
-
-        // --- Neck ---
-        const neck = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.055, 0.065, 0.1, S), skinMat
-        );
-        neck.position.set(0, 1.65, 0);
-        group.add(neck);
-
-        // --- Head ---
-        const head = new THREE.Mesh(
-            new THREE.SphereGeometry(0.14, S * 2, S), skinMat
-        );
-        head.scale.set(1, 1.08, 0.95);
-        head.position.set(0, 1.82, 0);
-        head.castShadow = true;
-        group.add(head);
-
-        // Jaw
-        const jaw = new THREE.Mesh(
-            new THREE.SphereGeometry(0.1, S, S, 0, Math.PI * 2, Math.PI * 0.4, Math.PI * 0.3), skinMat
-        );
-        jaw.position.set(0.02, 1.75, 0);
-        group.add(jaw);
-
-        // Ears
-        for (let side = -1; side <= 1; side += 2) {
-            const ear = new THREE.Mesh(
-                new THREE.SphereGeometry(0.03, 8, 6), skinMat
-            );
-            ear.scale.set(0.5, 1, 0.7);
-            ear.position.set(-0.01, 1.82, side * 0.14);
-            group.add(ear);
-        }
-
-        // Nose
-        const nose = new THREE.Mesh(
-            new THREE.ConeGeometry(0.02, 0.04, 6), skinMat
-        );
-        nose.rotation.x = -Math.PI / 2;
-        nose.position.set(0.15, 1.81, 0);
-        group.add(nose);
-
-        // Eyes
-        for (let side = -1; side <= 1; side += 2) {
-            // Eye white
-            const eyeWhite = new THREE.Mesh(
-                new THREE.SphereGeometry(0.02, 8, 6),
-                new THREE.MeshStandardMaterial({ flatShading: true, color: 0xf5f5f0, roughness: 0.3 })
-            );
-            eyeWhite.position.set(0.125, 1.84, side * 0.05);
-            group.add(eyeWhite);
-            // Iris
-            const iris = new THREE.Mesh(
-                new THREE.SphereGeometry(0.012, 8, 6),
-                new THREE.MeshStandardMaterial({ flatShading: true, color: 0x3a6b3a, roughness: 0.4 })
-            );
-            iris.position.set(0.14, 1.84, side * 0.05);
-            group.add(iris);
-            // Pupil
-            const pupil = new THREE.Mesh(
-                new THREE.SphereGeometry(0.006, 6, 4),
-                new THREE.MeshBasicMaterial({ flatShading: true, color: 0x111111 })
-            );
-            pupil.position.set(0.148, 1.84, side * 0.05);
-            group.add(pupil);
-
-            // Eyebrow
-            const brow = new THREE.Mesh(
-                new THREE.BoxGeometry(0.04, 0.008, 0.008), hairMat
-            );
-            brow.position.set(0.13, 1.87, side * 0.05);
-            brow.rotation.z = side * 0.15;
-            group.add(brow);
-        }
-
-        // Hair
-        const hair = new THREE.Mesh(
-            new THREE.SphereGeometry(0.155, S, S, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat
-        );
-        hair.position.set(-0.01, 1.85, 0);
-        group.add(hair);
-
-        // Hair band
-        const hairBand = new THREE.Mesh(
-            new THREE.TorusGeometry(0.145, 0.01, 8, S), leatherMat
-        );
-        hairBand.rotation.x = Math.PI / 2;
-        hairBand.rotation.z = 0.15;
-        hairBand.position.set(0, 1.87, 0);
-        group.add(hairBand);
-
-        // --- Shoulders ---
-        for (let side = -1; side <= 1; side += 2) {
-            const shoulder = new THREE.Mesh(
-                new THREE.SphereGeometry(0.065, S, S), tunicMat
-            );
-            shoulder.position.set(0, 1.52, side * 0.24);
-            shoulder.castShadow = true;
-            group.add(shoulder);
-
-            // Shoulder pad
-            const pad = new THREE.Mesh(
-                new THREE.SphereGeometry(0.07, S, S / 2, 0, Math.PI * 2, 0, Math.PI / 2), leatherMat
-            );
-            pad.position.set(0, 1.55, side * 0.25);
-            group.add(pad);
-        }
-
-        // --- Left arm (bow arm — extended) ---
-        const leftArm = new THREE.Group();
-        const lUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.3, S), tunicMat);
-        lUpper.rotation.z = Math.PI / 2.2;
-        lUpper.position.set(0.14, 0, 0);
-        lUpper.castShadow = true;
-        leftArm.add(lUpper);
-
-        const lElbow = new THREE.Mesh(new THREE.SphereGeometry(0.04, S, S), skinMat);
-        lElbow.position.set(0.28, 0.02, 0);
-        leftArm.add(lElbow);
-
-        const lFore = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.28, S), skinMat);
-        lFore.rotation.z = Math.PI / 2;
-        lFore.position.set(0.42, 0.02, 0);
-        lFore.castShadow = true;
-        leftArm.add(lFore);
-
-        // Bracer
-        const bracer = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.04, 0.1, S), leatherMat);
-        bracer.rotation.z = Math.PI / 2;
-        bracer.position.set(0.36, 0.02, 0);
-        leftArm.add(bracer);
-
-        // Hand
-        const lHand = new THREE.Mesh(new THREE.SphereGeometry(0.035, S, S), skinMat);
-        lHand.scale.set(0.8, 1, 0.7);
-        lHand.position.set(0.56, 0.02, 0);
-        leftArm.add(lHand);
-
-        leftArm.position.set(0, 1.47, -0.24);
-        group.add(leftArm);
-
-        // --- Right arm (draw arm — pulled back) ---
-        const rightArm = new THREE.Group();
-        const rUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.3, S), tunicMat);
-        rUpper.rotation.z = -Math.PI / 3;
-        rUpper.position.set(-0.06, -0.06, 0);
-        rUpper.castShadow = true;
-        rightArm.add(rUpper);
-
-        const rElbow = new THREE.Mesh(new THREE.SphereGeometry(0.04, S, S), skinMat);
-        rElbow.position.set(-0.12, -0.18, 0);
-        rightArm.add(rElbow);
-
-        const rFore = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.25, S), skinMat);
-        rFore.rotation.z = -Math.PI / 1.6;
-        rFore.position.set(-0.1, -0.28, 0);
-        rFore.castShadow = true;
-        rightArm.add(rFore);
-
-        // Draw hand with finger tab
-        const rHand = new THREE.Mesh(new THREE.SphereGeometry(0.035, S, S), skinMat);
-        rHand.scale.set(0.8, 1, 0.7);
-        rHand.position.set(-0.04, -0.36, 0);
-        rightArm.add(rHand);
-
-        const fTab = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.035, 0.05), leatherMat);
-        fTab.position.set(-0.04, -0.36, 0);
-        rightArm.add(fTab);
-
-        rightArm.position.set(0, 1.52, 0.24);
-        group.add(rightArm);
-
-        // --- Quiver ---
-        const quiver = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.05, 0.04, 0.5, S), leatherMat
-        );
-        quiver.rotation.z = 0.2;
-        quiver.position.set(-0.18, 1.22, 0.06);
-        quiver.castShadow = true;
-        group.add(quiver);
-
-        // Quiver strap
-        const strapCurve = new THREE.QuadraticBezierCurve3(
-            new THREE.Vector3(-0.18, 1.5, 0.06),
-            new THREE.Vector3(0.1, 1.5, 0.15),
-            new THREE.Vector3(0.05, 1.35, -0.1)
-        );
-        const strap = new THREE.Mesh(
-            new THREE.TubeGeometry(strapCurve, 12, 0.012, 6, false), leatherMat
-        );
-        group.add(strap);
-
-        // Arrows in quiver
-        const arrowShaftMat = new THREE.MeshStandardMaterial({ flatShading: true, color: 0xc8a85c, roughness: 0.6 });
-        const fletchColors = [0xcc3333, 0x3355cc, 0xcc3333, 0x33aa44, 0xccaa22];
-        for (let i = 0; i < 5; i++) {
-            const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.22, 6), arrowShaftMat);
-            shaft.position.set(-0.18 + (i - 2) * 0.015, 1.55, 0.06 + (i % 2) * 0.015);
-            shaft.rotation.z = 0.12 + i * 0.02;
-            group.add(shaft);
-
-            const fl = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.025, 0.035),
-                new THREE.MeshStandardMaterial({ flatShading: true, color: fletchColors[i], side: THREE.DoubleSide, roughness: 0.5 })
-            );
-            fl.position.set(-0.18 + (i - 2) * 0.015, 1.64, 0.06 + (i % 2) * 0.015);
-            group.add(fl);
-        }
-
-        // --- Bow ---
-        const bowGroup = new THREE.Group();
-
-        // Bow limbs (tube geometry for smooth curve)
-        const bowCurve = new THREE.QuadraticBezierCurve3(
-            new THREE.Vector3(0, -0.48, 0),
-            new THREE.Vector3(0.24, 0, 0),
-            new THREE.Vector3(0, 0.48, 0)
-        );
-        const bowTube = new THREE.TubeGeometry(bowCurve, 24, 0.016, S, false);
-        const bowMesh = new THREE.Mesh(bowTube, woodMat);
-        bowMesh.castShadow = true;
-        bowGroup.add(bowMesh);
-
-        // Decorative wrap at grip
-        const gripWrap = new THREE.Mesh(
-            new THREE.TorusGeometry(0.02, 0.008, 8, S), leatherMat
-        );
-        gripWrap.rotation.y = Math.PI / 2;
-        gripWrap.position.set(0.22, 0, 0);
-        bowGroup.add(gripWrap);
-
-        // Grip
-        const grip = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.022, 0.022, 0.09, S), leatherMat
-        );
-        grip.position.set(0.2, 0, 0);
-        bowGroup.add(grip);
-
-        // Bow tips with metal nocks
-        for (let end = -1; end <= 1; end += 2) {
-            const nock = new THREE.Mesh(new THREE.SphereGeometry(0.01, 8, 6), metalMat);
-            nock.position.set(0, end * 0.48, 0);
-            bowGroup.add(nock);
-        }
-
-        // Bowstring
-        const stringPts = [
-            new THREE.Vector3(0, -0.48, 0),
-            new THREE.Vector3(-0.18, 0, 0),
-            new THREE.Vector3(0, 0.48, 0),
-        ];
-        const sCurve = new THREE.QuadraticBezierCurve3(...stringPts);
-        const sGeo = new THREE.BufferGeometry().setFromPoints(sCurve.getPoints(24));
-        bowGroup.add(new THREE.Line(sGeo, new THREE.LineBasicMaterial({ color: 0xeeeedd })));
-
-        // Nocked arrow
-        const nocked = new THREE.Group();
-        const ns = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.6, 6), arrowShaftMat);
-        ns.rotation.z = Math.PI / 2;
-        nocked.add(ns);
-        const nt = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.05, 6), metalMat);
-        nt.rotation.z = -Math.PI / 2;
-        nt.position.x = 0.33;
-        nocked.add(nt);
-        for (let f = 0; f < 3; f++) {
-            const flt = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.05, 0.025),
-                new THREE.MeshStandardMaterial({ flatShading: true, color: 0xcc3333, side: THREE.DoubleSide, roughness: 0.5 })
-            );
-            flt.position.x = -0.26;
-            flt.rotation.x = (f / 3) * Math.PI * 2;
-            nocked.add(flt);
-        }
-        nocked.position.set(-0.08, 0, 0);
-        bowGroup.add(nocked);
-
-        bowGroup.position.set(0.56, 1.49, -0.24);
-        this.bowGroup = bowGroup;
-        group.add(bowGroup);
-
-        // --- Cape ---
-        const capeGeo = new THREE.PlaneGeometry(0.45, 0.65, 4, 6);
-        const cv = capeGeo.attributes.position;
-        for (let i = 0; i < cv.count; i++) {
-            const y = cv.getY(i);
-            cv.setZ(i, -0.04 - Math.abs(y) * 0.12 + Math.sin(cv.getX(i) * 4) * 0.02);
-        }
-        capeGeo.computeVertexNormals();
-        const capeMat = new THREE.MeshStandardMaterial({ flatShading: true,
-            color: 0x1a3f1a, roughness: 0.7, metalness: 0, side: THREE.DoubleSide
+        }, undefined, (error) => {
+            console.error("Error loading FBX:", error);
         });
-        const cape = new THREE.Mesh(capeGeo, capeMat);
-        cape.visible = false;
-        cape.position.set(-0.16, 1.32, 0);
-        cape.rotation.y = Math.PI / 2;
-        // cape.castShadow = true;
-        this.cape = cape;
-        group.add(cape);
-
-        // Cape clasp
-        const clasp = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 6), goldMat);
-        clasp.position.set(-0.05, 1.58, 0.12);
-        group.add(clasp);
-        const clasp2 = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 6), goldMat);
-        clasp2.position.set(-0.05, 1.58, -0.12);
-        group.add(clasp2);
-
-        group.position.set(0, 0, 0);
-        this.archerGroup = group;
-        this.scene.add(group);
     }
 
     // -------------------------------------------------------------------
@@ -935,6 +546,31 @@ class ArcheryScene {
         if (this.animatingArrow) return;
         this.animatingArrow = true;
 
+        if (this.actions && this.actions['draw']) {
+            this.actions['draw'].reset()
+                .setEffectiveWeight(1)
+                .setEffectiveTimeScale(1.5)
+                .crossFadeFrom(this.activeAction, 0.3)
+                .play();
+            this.activeAction = this.actions['draw'];
+            
+            setTimeout(() => {
+                this._launchArrowMesh(trajectoryPoints, onComplete);
+                
+                if (this.actions['idle']) {
+                    this.actions['idle'].reset()
+                        .setEffectiveWeight(1)
+                        .crossFadeFrom(this.activeAction, 0.5)
+                        .play();
+                    this.activeAction = this.actions['idle'];
+                }
+            }, 500);
+        } else {
+            this._launchArrowMesh(trajectoryPoints, onComplete);
+        }
+    }
+
+    _launchArrowMesh(trajectoryPoints, onComplete) {
         if (this.arrowMesh) this.scene.remove(this.arrowMesh);
         if (this.trailLine) this.scene.remove(this.trailLine);
         this.particles.forEach(p => this.scene.remove(p));
@@ -1030,6 +666,10 @@ class ArcheryScene {
         const dt = this.clock.getDelta();
         const time = this.clock.getElapsedTime();
 
+        if (this.mixer) {
+            this.mixer.update(dt);
+        }
+
         // Moving targets
         Object.keys(this.targets).forEach(id => {
             const obj = this.targets[id];
@@ -1061,14 +701,8 @@ class ArcheryScene {
         });
 
         // Archer idle
-        if (this.archerGroup) {
-            this.archerGroup.scale.y = 1 + Math.sin(time * 1.8) * 0.006;
-            this.archerGroup.rotation.z = Math.sin(time * 0.7) * 0.003;
-        }
-        if (this.cape) {
-            this.cape.rotation.x = Math.sin(time * 2.0) * 0.05;
-            this.cape.rotation.z = Math.sin(time * 1.3 + 0.5) * 0.03;
-        }
+
+
 
         // Highlight rings
         Object.values(this.highlightRings).forEach(ring => {
