@@ -1,0 +1,75 @@
+nohup: ignoring input
+
+[DEBUG] sys.argv = ['rl_training/train.py', '--device', 'cpu', '--num-envs', '50', '--timesteps', '15000000', '--start-stage', '4', '--max-stage', '4', '--resume', 'rl_training/checkpoints/static_far_best.zip']
+
+
+Parsed args:
+  --resume       = rl_training/checkpoints/static_far_best.zip
+  --start-stage  = 4
+  --stage        = 0
+  --device       = cpu
+  --num-envs     = 50
+  --timesteps    = 15,000,000
+  effective start stage → 4
+  ⚠ num_envs=50 — high env count may cause KL instability. Monitor KL 
+divergence.
+
+═══ LEAA Training ═══
+  Device: cpu
+  Parallel envs: 50
+  Total timesteps: 15,000,000
+  Skipping stages 0-3 (already trained): ['static_close', 'static_medium', 
+'static_mid_far', 'static_far']
+  Starting stage: 4 (moving_slow)
+  Batch size: n_steps(2048) × envs(50) = 102,400 per update
+  Resuming from: rl_training/checkpoints/static_far_best.zip
+  Loaded VecNormalize stats: vecnormalize_static_far_best.pkl
+  VecNormalize: training=True, clip_obs=15.0 (widens for resume transition)
+  Fine-tuning hyperparams (resume mode):
+    lr_schedule=1e-5 (fixed), batch_size=256, n_epochs=5, ent_coef=0.03, 
+clip_range_schedule=0.15
+Logging to /content/leaa/rl_training/logs/ppo_moving_slow
+  Policy network: ActorCriticPolicy(
+  (features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (pi_features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (vf_features_extractor): FlattenExtractor(
+    (flatten): Flatten(start_dim=1, end_dim=-1)
+  )
+  (mlp_extractor): MlpExtractor(
+    (policy_net): Sequential(
+      (0): Linear(in_features=22, out_features=256, bias=True)
+      (1): Tanh()
+      (2): Linear(in_features=256, out_features=256, bias=True)
+      (3): Tanh()
+    )
+    (value_net): Sequential(
+      (0): Linear(in_features=22, out_features=256, bias=True)
+      (1): Tanh()
+      (2): Linear(in_features=256, out_features=256, bias=True)
+      (3): Tanh()
+    )
+  )
+  (action_net): Linear(in_features=256, out_features=3, bias=True)
+  (value_net): Linear(in_features=256, out_features=1, bias=True)
+)
+
+  Stage budget allocation (stages 4+, total=15,000,000):
+    stage 4: moving_slow    : 15,000,000 steps  (weight=1)
+  TightenVecNormalize: clip_obs=15.0 → 10.0 after 20k steps
+  Active callbacks: CurriculumCallback, EntropyCoefficientSchedule, 
+KLSafetyCallback, TightenVecNormalize
+
+Starting training...
+  Stage budgets: ['15,000,000']
+
+
+── Stage 4: moving_slow (budget: 15,000,000 steps, remaining: 15,000,000) ──
+Logging to /content/leaa/rl_training/logs/ppo_moving_slow
+  💾 Checkpoint saved: moving_slow_step_10360534.zip (success: 10.0%)
+
+📐 VecNormalize clip_obs tightened to 10.0
+  💾 Checkpoint saved: moving_slow_step_10410534.zip (success: 11.1%)
