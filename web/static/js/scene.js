@@ -343,6 +343,7 @@ class ArcheryScene {
             
             object.scale.set(0.012, 0.012, 0.012);
             object.position.set(0, 0, 0);
+            object.rotation.y = Math.PI * 0.47;   // face straight towards targets
             
             // Cast shadows
             object.traverse((child) => {
