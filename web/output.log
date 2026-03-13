@@ -8,9 +8,33 @@
  * Restarting with stat
  * Debugger is active!
  * Debugger PIN: 112-488-872
-192.168.1.14 - - [13/Mar/2026 02:59:38] "GET / HTTP/1.1" 200 -
-192.168.1.14 - - [13/Mar/2026 02:59:39] "GET /static/css/style.css HTTP/1.1" 200 -
-192.168.1.14 - - [13/Mar/2026 02:59:39] "GET /static/js/scene.js HTTP/1.1" 200 -
-192.168.1.14 - - [13/Mar/2026 02:59:39] "GET /static/js/app.js HTTP/1.1" 200 -
-192.168.1.14 - - [13/Mar/2026 02:59:39] "GET /api/scene HTTP/1.1" 200 -
-192.168.1.14 - - [13/Mar/2026 02:59:39] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+192.168.1.14 - - [13/Mar/2026 03:15:23] "GET / HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 03:15:23] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:15:23] "[36mGET /static/js/scene.js HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:15:23] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:15:24] "[36mGET /static/models/X%20Bot.fbx HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:15:24] "GET /api/scene HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 03:15:24] "[36mGET /static/models/standing%20draw%20arrow.fbx HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:15:24] "[36mGET /static/models/standing%20idle%2001.fbx HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:15:24] "[36mGET /static/models/standing%20aim%20overdraw.fbx HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:15:30] "POST /api/fire HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 03:15:45] "POST /api/fire HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 03:15:50] "POST /api/fire HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 03:16:59] "GET / HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 03:16:59] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:16:59] "[36mGET /static/js/scene.js HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:16:59] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:16:59] "[36mGET /static/models/X%20Bot.fbx HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:17:00] "GET /api/scene HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 03:17:00] "[36mGET /static/models/standing%20draw%20arrow.fbx HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:17:00] "[36mGET /static/models/standing%20aim%20overdraw.fbx HTTP/1.1[0m" 304 -
+192.168.1.14 - - [13/Mar/2026 03:17:00] "[36mGET /static/models/standing%20idle%2001.fbx HTTP/1.1[0m" 304 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "[36mGET /static/css/style.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "GET /static/js/scene.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "GET /static/models/X%20Bot.fbx HTTP/1.1" 200 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "GET /api/scene HTTP/1.1" 200 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "GET /static/models/standing%20idle%2001.fbx HTTP/1.1" 200 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "GET /static/models/standing%20draw%20arrow.fbx HTTP/1.1" 200 -
+127.0.0.1 - - [13/Mar/2026 03:17:10] "GET /static/models/standing%20aim%20overdraw.fbx HTTP/1.1" 200 -
