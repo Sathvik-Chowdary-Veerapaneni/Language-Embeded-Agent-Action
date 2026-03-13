@@ -1,0 +1,4 @@
+1. Buidling a relaist 3D chracter [https://tympanus.net/codrops/2019/10/14/how-to-create-an-interactive-3d-character-with-three-js/]
+2. simulating how differnt projections, and agent was learned to simulate 1000's of arrroes hitting, and selectiing the best one, if user opted, model vs agent_trails kind of button togging
+3. better UI desgigns and objects, assets
+4. Locked Perspectie and good running of graphics

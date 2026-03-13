@@ -1,0 +1,16 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:3000
+ * Running on http://192.168.1.14:3000
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 112-488-872
+192.168.1.14 - - [13/Mar/2026 02:59:38] "GET / HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 02:59:39] "GET /static/css/style.css HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 02:59:39] "GET /static/js/scene.js HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 02:59:39] "GET /static/js/app.js HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 02:59:39] "GET /api/scene HTTP/1.1" 200 -
+192.168.1.14 - - [13/Mar/2026 02:59:39] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -

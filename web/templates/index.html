@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAA Archery Demo</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <!-- HUD Stats -->
+    <div id="hud">
+        <div class="hud-title">LEAA Archery</div>
+        <div class="hud-stat">Shots: <span id="stat-shots">0</span></div>
+        <div class="hud-stat">Hits: <span id="stat-hits">0</span></div>
+        <div class="hud-stat">Accuracy: <span id="stat-accuracy">0%</span></div>
+    </div>
+
+    <!-- Result Banner -->
+    <div id="result-banner" class="hidden"></div>
+
+    <!-- Command Bar -->
+    <div id="command-bar">
+        <input type="text" id="command-input" placeholder='Type a command... e.g. "shoot the red target"' autocomplete="off">
+        <button id="fire-btn">Fire</button>
+        <button id="randomize-btn">Randomize</button>
+    </div>
+
+    <script src="https://unpkg.com/three@0.128.0/build/three.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="/static/js/scene.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
