@@ -484,11 +484,17 @@ def train(
         "full_dynamic": 5,
     }
     remaining_stages = stages[effective_start_stage:]
-    remaining_weights = [named_stage_weights.get(s["name"], 1) for s in remaining_stages]
-    total_weight = sum(remaining_weights)
-    timesteps_per_stage = [
-        int(total_timesteps * w / total_weight) for w in remaining_weights
-    ]
+    # If training a single stage (start == max), give it the full budget
+    if max_stage is not None and max_stage == effective_start_stage:
+        remaining_weights = [1]
+        timesteps_per_stage = [total_timesteps]
+        remaining_stages = [remaining_stages[0]]
+    else:
+        remaining_weights = [named_stage_weights.get(s["name"], 1) for s in remaining_stages]
+        total_weight = sum(remaining_weights)
+        timesteps_per_stage = [
+            int(total_timesteps * w / total_weight) for w in remaining_weights
+        ]
     console.print(f"\n  [bold]Stage budget allocation "
                   f"(stages {effective_start_stage}+, total={total_timesteps:,}):[/bold]")
     for s, ts, w in zip(remaining_stages, timesteps_per_stage, remaining_weights):
