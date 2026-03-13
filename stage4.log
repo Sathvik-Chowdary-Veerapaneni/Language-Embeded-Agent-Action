@@ -420,3 +420,33 @@ Logging to /content/leaa/rl_training/logs/ppo_moving_slow
 |    std                  | 0.686       |
 |    value_loss           | 0.108       |
 -----------------------------------------
+  💾 Checkpoint saved: moving_slow_step_11610534.zip (success: 25.1%)
+  💾 Checkpoint saved: moving_slow_step_11660534.zip (success: 25.2%)
+-----------------------------------------
+| curriculum/             |             |
+|    envs                 | 50          |
+|    episodes             | 1331200     |
+|    stage                | 4           |
+|    stage_name           | moving_slow |
+|    success_rate         | 0.245       |
+| rollout/                |             |
+|    ep_len_mean          | 1           |
+|    ep_rew_mean          | 13.6        |
+| time/                   |             |
+|    fps                  | 375         |
+|    iterations           | 13          |
+|    time_elapsed         | 3545        |
+|    total_timesteps      | 11691684    |
+| train/                  |             |
+|    approx_kl            | 0.020636508 |
+|    clip_fraction        | 0.244       |
+|    clip_range           | 0.2         |
+|    entropy_loss         | 5.16        |
+|    explained_variance   | 0.398       |
+|    learning_rate        | 1e-05       |
+|    loss                 | 0.19        |
+|    n_updates            | 3137        |
+|    policy_gradient_loss | -0.000553   |
+|    std                  | 0.685       |
+|    value_loss           | 0.108       |
+-----------------------------------------
