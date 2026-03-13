@@ -450,3 +450,5 @@ Logging to /content/leaa/rl_training/logs/ppo_moving_slow
 |    std                  | 0.685       |
 |    value_loss           | 0.108       |
 -----------------------------------------
+  💾 Checkpoint saved: moving_slow_step_11710534.zip (success: 23.3%)
+  💾 Checkpoint saved: moving_slow_step_11760534.zip (success: 23.6%)
