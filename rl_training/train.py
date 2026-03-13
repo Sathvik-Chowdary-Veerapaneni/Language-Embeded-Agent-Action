@@ -340,11 +340,10 @@ def train(
 ):
     """Main training loop with curriculum progression and vectorized envs."""
 
-    # v3: 15 envs caused KL spikes to 0.047. Cap at 12 with a warning.
+    # v3: 15 envs caused KL spikes to 0.047. Warn but allow override.
     if num_envs > 12:
-        console.print(f"  [yellow]⚠ num_envs={num_envs} may cause KL instability "
-                      f"(v3 saw spikes at 15). Capping to 12.[/yellow]")
-        num_envs = 12
+        console.print(f"  [yellow]⚠ num_envs={num_envs} — high env count may cause KL instability. "
+                      f"Monitor KL divergence.[/yellow]")
 
     # --start-stage controls which stage to begin at (independent of --resume).
     # --resume controls checkpoint loading (independent of --start-stage).
