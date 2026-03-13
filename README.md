@@ -14,4 +14,10 @@ Phase 2: Language Grounding (LLM parses "hit yellow flag" → target spec → RL
 - **RL**: Stable-Baselines3 + PPO on MPS (Apple Silicon)
 - **Language**: Claude API / Ollama (Phi-3 local)
 - **Device**: M1 MacBook Pro, MPS backend
-  
+
+
+  Stack Moved March
+  - three.js and flask
+  - backend : Colab Servers, remote ssh tunnel to automate batch and distrubuted trianing, and collective training steps across the running enviroments to central locaiton
+  - model : basic natural intents
+  - device : M1 Macbook Pro -> to write code
