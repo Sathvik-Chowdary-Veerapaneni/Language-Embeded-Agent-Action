@@ -1265,10 +1265,14 @@ class ArcheryScene {
         document.body.classList.add('aiming');
     }
 
-    exitAimMode() {
+    exitAimMode(keepCamera) {
         if (!this.isAiming) return;
         this.isAiming = false;
-        this._cameraLerpDir = -1; // zoom back out
+
+        // If firing, keep camera in aim position — arrow cam will take over seamlessly
+        if (!keepCamera) {
+            this._cameraLerpDir = -1; // zoom back out
+        }
 
         // Stop tracking mouse movement
         if (this._onAimMouseMove) {
@@ -1397,8 +1401,14 @@ class ArcheryScene {
             this._arrowCamHolding = false;
             this._arrowCamReturning = false;
             this._arrowCamReturnLerp = 0;
-            // Stop the aim→default zoom-out so arrow cam takes over
+            // Keep camera where it is — arrow cam will smoothly take over
+            // by initializing its last pos/target from the current camera state
             this._cameraLerpDir = 0;
+            this._arrowCamLastPos = this.camera.position.clone();
+            this._arrowCamLastTarget = new THREE.Vector3();
+            this.camera.getWorldDirection(this._arrowCamLastTarget);
+            this._arrowCamLastTarget.multiplyScalar(10).add(this.camera.position);
+            // Now reset lerp so aim camera logic stops
             this._cameraLerp = 0;
 
             // Already in draw pose from aim mode — launch immediately, then return to idle
