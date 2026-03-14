@@ -145,8 +145,8 @@ def _aim_from_direction(aim_dir, wind=None):
     yaw = math.atan2(dy, dx)
     pitch = math.atan2(dz, horiz) if horiz > 1e-6 else 0.3
 
-    # Clamp pitch to reasonable range
-    pitch = max(math.radians(2), min(math.radians(55), pitch))
+    # Clamp pitch to wide range for full field coverage
+    pitch = max(math.radians(-10), min(math.radians(75), pitch))
 
     return pitch, yaw
 
@@ -294,6 +294,28 @@ def fire():
         "distance": target_distance,
         "flag_color": resp_target.flag_color,
     })
+
+
+@app.route("/api/register_bullseyes", methods=["POST"])
+def register_bullseyes():
+    """Register bullseye target positions from the frontend GLB model."""
+    data = request.get_json(force=True)
+    bullseyes = data.get("bullseyes", [])
+
+    for b in bullseyes:
+        pos = b["position"]  # Three.js coords [x, y, z]
+        # Convert Three.js [x, y, z] → physics [x, z, y]
+        physics_pos = [pos[0], pos[2], pos[1]]
+        radius = b.get("radius", 0.4)
+        registry.add_object(
+            id=b["id"],
+            position=physics_pos,
+            velocity=[0, 0, 0],
+            flag_color="red",
+            radius=radius,
+        )
+
+    return jsonify({"registered": len(bullseyes), "ids": [b["id"] for b in bullseyes]})
 
 
 @app.route("/api/randomize", methods=["POST"])
