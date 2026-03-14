@@ -72,6 +72,9 @@
         // Listen on document for reliability — check target to ignore UI clicks
         // -------------------------------------------------------------------
 
+        let aimStartTime = 0;
+        const MIN_AIM_HOLD_MS = 400; // must hold at least 400ms before firing
+
         document.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
             // Ignore clicks on UI elements
@@ -80,6 +83,7 @@
 
             // Click anywhere on the scene to start aiming — no target selection needed
             isMouseAiming = true;
+            aimStartTime = performance.now();
             selectedTargetId = null; // aim-direction based, no pre-selected target
             scene.enterAimMode();
             e.preventDefault();
@@ -89,6 +93,13 @@
         document.addEventListener('mouseup', (e) => {
             if (e.button !== 0 || !isMouseAiming) return;
             isMouseAiming = false;
+
+            // Require minimum hold time — quick clicks just cancel aim, don't fire
+            if (performance.now() - aimStartTime < MIN_AIM_HOLD_MS) {
+                scene.exitAimMode();
+                return;
+            }
+
             doFireGame();
             e.preventDefault();
         });

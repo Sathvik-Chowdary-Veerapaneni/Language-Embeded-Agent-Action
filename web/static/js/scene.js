@@ -1315,16 +1315,37 @@ class ArcheryScene {
     }
 
     getAimDirection() {
-        // Returns the aim direction vector based on current mouse offset
-        // Compute from the actual offset look-at target (matches what the camera sees)
-        const aimYaw = this._aimYaw || 0;
-        const aimPitch = this._aimPitch || 0;
+        // Raycast from camera center to find the 3D point the crosshair is on,
+        // then compute direction from the ARROW ORIGIN to that point.
+        // This fixes parallax between camera position and arrow launch position.
 
-        const lookTarget = this._cameraAim.target.clone();
-        lookTarget.z += aimYaw * 12;
-        lookTarget.y += aimPitch * 8;
+        // Arrow origin in Three.js coords: physics [0,0,1.5] → Three.js [0, 1.5, 0]
+        const arrowOrigin = new THREE.Vector3(0, 1.5, 0);
 
-        const dir = new THREE.Vector3().subVectors(lookTarget, this._cameraAim.pos).normalize();
+        // Cast a ray from camera center (where crosshair is) into the scene
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+
+        // Find what the crosshair is pointing at
+        const meshes = [];
+        Object.values(this.targetMeshes).forEach(m => {
+            m.traverse(child => { if (child.isMesh) meshes.push(child); });
+        });
+        const hits = raycaster.intersectObjects(meshes, false);
+
+        let aimPoint;
+        if (hits.length > 0) {
+            // Crosshair is on a target — aim directly at the hit point
+            aimPoint = hits[0].point;
+        } else {
+            // No target hit — project the camera ray far out to get a distant aim point
+            const camDir = new THREE.Vector3();
+            this.camera.getWorldDirection(camDir);
+            aimPoint = this.camera.position.clone().add(camDir.multiplyScalar(50));
+        }
+
+        // Direction from arrow origin to the aim point
+        const dir = new THREE.Vector3().subVectors(aimPoint, arrowOrigin).normalize();
         return dir;
     }
 
@@ -1861,24 +1882,15 @@ class ArcheryScene {
             this.camera.updateProjectionMatrix();
         }
 
-        // Rotate archer (bow + body) to follow aim direction
+        // Rotate archer to follow crosshair — horizontal (yaw) only, no tilt
         if (this.archerGroup && this._archerBaseYaw !== undefined) {
-            const aimYawNow = this._aimYaw || 0;
-            const aimPitchNow = this._aimPitch || 0;
-
-            // Target yaw: base orientation + aim offset (inverted because Three.js Y-rotation is CCW)
-            const targetYaw = this._archerBaseYaw - aimYawNow;
-            // Smoothly lerp the archer's Y rotation towards target
-            this.archerGroup.rotation.y += (targetYaw - this.archerGroup.rotation.y) * Math.min(1, dt * 12);
-
-            // Upper-body pitch via spine bone
-            if (this._spineBone && this._spineRestQuaternion) {
-                const targetPitch = aimPitchNow * 1.5; // amplify slightly for visibility
-                const pitchQuat = new THREE.Quaternion().setFromEuler(
-                    new THREE.Euler(targetPitch, 0, 0)
-                );
-                const goalQuat = this._spineRestQuaternion.clone().multiply(pitchQuat);
-                this._spineBone.quaternion.slerp(goalQuat, Math.min(1, dt * 12));
+            if (this.isAiming) {
+                const aimYawNow = this._aimYaw || 0;
+                const targetYaw = this._archerBaseYaw - aimYawNow;
+                this.archerGroup.rotation.y += (targetYaw - this.archerGroup.rotation.y) * Math.min(1, dt * 10);
+            } else {
+                // Smoothly return to base when not aiming
+                this.archerGroup.rotation.y += (this._archerBaseYaw - this.archerGroup.rotation.y) * Math.min(1, dt * 6);
             }
         }
 
