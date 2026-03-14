@@ -14,6 +14,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -158,6 +159,24 @@ class CurriculumCallback(BaseCallback):
             self.logger.record("curriculum/success_rate", self.success_rate)
             self.logger.record("curriculum/episodes", self.episode_count)
             self.logger.record("curriculum/envs", self.num_envs)
+
+            # Write live status file for external monitoring (email reports, dashboards)
+            status = {
+                "stage": self.current_stage,
+                "stage_name": self.current_stage_config["name"],
+                "success_rate": round(self.success_rate, 4),
+                "best_success_rate": round(self.best_success_rate, 4),
+                "episodes": self.episode_count,
+                "stage_episodes": self.stage_episode_count,
+                "timesteps": self.num_timesteps,
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            status_path = self.checkpoint_dir.parent / "training_status.json"
+            try:
+                with open(status_path, "w") as f:
+                    json.dump(status, f)
+            except Exception:
+                pass
 
         # Checkpoint
         if self.num_timesteps - self.last_checkpoint_step >= self.checkpoint_freq:

@@ -26,7 +26,7 @@ Stage map:
 """
 
 import argparse
-import glob as globmod
+import json
 import os
 import shutil
 import signal
@@ -144,11 +144,21 @@ class RuntimeWatchdog:
                 self._warned = True
                 print(f"\n⚠ Runtime warning: ~1h until graceful stop "
                       f"(elapsed {self._fmt(elapsed)}, remaining {self._fmt(remaining)})")
+                # Include live stats in warning
+                status = read_training_status() if 'read_training_status' in dir() else {}
+                stats_str = ""
+                if status:
+                    stats_str = (
+                        f"\n\nCurrent stats:\n"
+                        f"  Stage: {status.get('stage_name', '?')}\n"
+                        f"  Success rate: {status.get('success_rate', 0):.1%}\n"
+                        f"  Timesteps: {status.get('timesteps', 0):,}\n"
+                    )
                 self.notifier.send(
-                    f"Runtime warning — {self.stage_name} (~1h left)",
+                    f"⚠ 1 HOUR LEFT — {self.stage_name}",
                     f"Session approaching time limit.\n"
                     f"Elapsed: {self._fmt(elapsed)}, Remaining: ~{self._fmt(remaining)}\n"
-                    f"Training will stop gracefully in ~1 hour."
+                    f"Training will stop gracefully in ~1 hour.{stats_str}"
                 )
 
             if not self._stopped and remaining <= self.buffer_seconds:
@@ -317,6 +327,55 @@ def background_sync(start_stage: int, notifier: EmailNotifier,
             print(f"[sync] Error: {e}")
 
 
+# ─── Hourly Status Email ─────────────────────────────────────────────────────
+
+STATUS_FILE = REPO_ROOT / "rl_training" / "training_status.json"
+
+def read_training_status() -> dict:
+    """Read live training status written by train.py callback."""
+    try:
+        with open(STATUS_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def hourly_status_email(notifier: EmailNotifier, start_time: float):
+    """Send training status email every hour."""
+    report_num = 0
+    while True:
+        time.sleep(3600)  # 1 hour
+        report_num += 1
+        status = read_training_status()
+        if not status:
+            continue
+
+        elapsed_h = (time.time() - start_time) / 3600
+        stage_name = status.get("stage_name", "?")
+        success_rate = status.get("success_rate", 0)
+        best_rate = status.get("best_success_rate", 0)
+        timesteps = status.get("timesteps", 0)
+        episodes = status.get("episodes", 0)
+        stage_eps = status.get("stage_episodes", 0)
+
+        subject = f"Hourly #{report_num} — {stage_name} @ {success_rate:.1%}"
+        body = (
+            f"LEAA Training Status Report #{report_num}\n"
+            f"{'='*40}\n\n"
+            f"Stage:            {status.get('stage', '?')} — {stage_name}\n"
+            f"Success rate:     {success_rate:.1%}\n"
+            f"Best success:     {best_rate:.1%}\n"
+            f"Total timesteps:  {timesteps:,}\n"
+            f"Total episodes:   {episodes:,}\n"
+            f"Stage episodes:   {stage_eps:,}\n"
+            f"Elapsed:          {elapsed_h:.1f}h\n"
+            f"Last update:      {status.get('timestamp', '?')}\n"
+        )
+
+        notifier.send(subject, body)
+        print(f"[status] Hourly report #{report_num} sent: {stage_name} @ {success_rate:.1%}")
+
+
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
@@ -381,6 +440,16 @@ def main():
     sync_thread.start()
     print(f"✓ Background sync started (every {args.sync_interval}s)")
     print(f"  Syncs: checkpoints + logs + training data → git push")
+
+    # ── Hourly status email thread ───────────────────────────────────────────
+    session_start = time.time()
+    status_thread = threading.Thread(
+        target=hourly_status_email,
+        args=(notifier, session_start),
+        daemon=True,
+    )
+    status_thread.start()
+    print(f"✓ Hourly status emails enabled")
 
     # ── Runtime watchdog ────────────────────────────────────────────────────
     watchdog = None
