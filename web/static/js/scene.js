@@ -659,12 +659,17 @@ class ArcheryScene {
             'mixamorigRightHand', 'RightHand', 'mixamorig:RightHand',
         ];
         let handBone = null;
+        let rightHandBone = null;
         skeleton.traverse((child) => {
             if (child.isBone) {
-                const name = child.name;
+                const name = child.name.toLowerCase();
                 // Prefer left hand (bow hand in archery)
-                if (name.toLowerCase().includes('lefthand') && !name.toLowerCase().includes('thumb') && !name.toLowerCase().includes('index')) {
+                if (name.includes('lefthand') && !name.includes('thumb') && !name.includes('index')) {
                     handBone = child;
+                }
+                // Find right hand (arrow hand)
+                if (name.includes('righthand') && !name.includes('thumb') && !name.includes('index')) {
+                    rightHandBone = child;
                 }
             }
         });
@@ -679,6 +684,15 @@ class ArcheryScene {
             this._attachBowToHand();
         } else {
             console.warn('Could not find hand bone in skeleton');
+        }
+
+        // Right hand — arrow hand
+        if (rightHandBone) {
+            console.log('Found right hand bone:', rightHandBone.name);
+            this._rightHandBone = rightHandBone;
+            this._attachArrowToHand();
+        } else {
+            console.warn('Could not find right hand bone in skeleton');
         }
 
         // Find spine bone for upper-body pitch during aiming
@@ -728,6 +742,71 @@ class ArcheryScene {
                 delete this._glbModels['bow'];
             }
         });
+    }
+
+    _attachArrowToHand() {
+        if (!this._rightHandBone) return;
+
+        const gltfLoader = new THREE.GLTFLoader();
+        gltfLoader.load('/static/models/objects/Arrow.glb', (gltf) => {
+            const arrowModel = gltf.scene;
+            const box = new THREE.Box3().setFromObject(arrowModel);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+
+            // Determine which axis is the arrow's long axis
+            const maxAxis = (size.x >= size.y && size.x >= size.z) ? 'x' :
+                            (size.y >= size.z) ? 'y' : 'z';
+            this._arrowLongAxis = maxAxis;
+
+            // Scale arrow to ~0.7m in world space
+            const worldLen = 0.7;
+            const s = worldLen / Math.max(size.x, size.y, size.z, 0.001);
+            arrowModel.scale.set(s, s, s);
+
+            arrowModel.traverse(child => {
+                if (child.isMesh) child.castShadow = true;
+            });
+
+            // Keep arrow in world space (scene), NOT attached to a bone
+            // Position/rotation will be updated each frame in _updateNockedArrow()
+            arrowModel.visible = false;
+            this.scene.add(arrowModel);
+            this._handArrowModel = arrowModel;
+            console.log('Arrow loaded for nocking (world-space, long axis:', maxAxis, ')');
+        });
+    }
+
+    _updateNockedArrow() {
+        // Position the arrow spanning from right hand (nock) toward left hand (bow),
+        // extending past the bow toward the target — like a real nocked arrow
+        if (!this._handArrowModel || !this._handArrowModel.visible) return;
+        if (!this._rightHandBone || !this._handBone) return;
+
+        // Get world positions of both hands
+        const rightHandPos = new THREE.Vector3();
+        const leftHandPos = new THREE.Vector3();
+        this._rightHandBone.getWorldPosition(rightHandPos);
+        this._handBone.getWorldPosition(leftHandPos);
+
+        // Arrow direction: from right hand (nock) toward and past left hand (bow tip)
+        const dir = new THREE.Vector3().subVectors(leftHandPos, rightHandPos).normalize();
+
+        // Place the arrow's center between the two hands, shifted forward
+        // so the arrowhead extends past the bow
+        const midPoint = new THREE.Vector3().lerpVectors(rightHandPos, leftHandPos, 0.6);
+        this._handArrowModel.position.copy(midPoint);
+
+        // Orient arrow along the hand-to-hand direction
+        // Build quaternion to rotate the arrow's long axis to align with dir
+        const arrowAxis = this._arrowLongAxis;
+        const localAxis = new THREE.Vector3(
+            arrowAxis === 'x' ? 1 : 0,
+            arrowAxis === 'y' ? 1 : 0,
+            arrowAxis === 'z' ? 1 : 0
+        );
+        const quat = new THREE.Quaternion().setFromUnitVectors(localAxis, dir);
+        this._handArrowModel.quaternion.copy(quat);
     }
 
     // -------------------------------------------------------------------
@@ -1177,6 +1256,9 @@ class ArcheryScene {
             this.activeAction = draw;
         }
 
+        // Show arrow in right hand
+        if (this._handArrowModel) this._handArrowModel.visible = true;
+
         // Show crosshair + power bar
         document.getElementById('crosshair').className = 'show';
         document.getElementById('aim-power').className = 'show';
@@ -1197,6 +1279,9 @@ class ArcheryScene {
         // Reset aim offsets
         this._aimYaw = 0;
         this._aimPitch = 0;
+
+        // Hide arrow in right hand
+        if (this._handArrowModel) this._handArrowModel.visible = false;
 
         // Hide crosshair + power bar
         document.getElementById('crosshair').className = 'hidden';
@@ -1786,6 +1871,9 @@ class ArcheryScene {
                 this._spineBone.quaternion.slerp(goalQuat, Math.min(1, dt * 12));
             }
         }
+
+        // Update nocked arrow position (spans right hand → left hand → target)
+        this._updateNockedArrow();
 
         // Update aim power while holding
         this._updateAimPower();
