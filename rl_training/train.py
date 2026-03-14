@@ -579,9 +579,13 @@ def train(
 
             # Check if stage advancement was triggered
             if curriculum_cb.stage_complete:
-                # Save VecNormalize stats before transition
-                old_vecnorm_path = CHECKPOINTS_DIR / f"vecnormalize_{stage_name}_final.pkl"
+                # Save model + VecNormalize for the completed stage
+                # This ensures we have per-stage checkpoints for later evaluation
+                completed_model_path = CHECKPOINTS_DIR / f"final_{stage_name}.zip"
+                model.save(str(completed_model_path))
+                old_vecnorm_path = CHECKPOINTS_DIR / f"vecnormalize_final_{stage_name}.pkl"
                 env.save(str(old_vecnorm_path))
+                console.print(f"  💾 Stage completed — saved {completed_model_path.name} + {old_vecnorm_path.name}")
 
                 # Advance callback state
                 curriculum_cb.advance_stage()

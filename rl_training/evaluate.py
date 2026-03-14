@@ -65,12 +65,20 @@ def find_vecnorm_stats(model_path: str, vecnorm_path: str = None) -> str:
     candidates = [
         # Match model name directly
         model_dir / f"vecnormalize_{model_stem}.pkl",
-        # Common final patterns
+        # Common final patterns (new naming: final_{stage_name}.zip)
         CHECKPOINTS_DIR / f"vecnormalize_{model_stem}.pkl",
         CHECKPOINTS_DIR / "vecnormalize_final_stage3.pkl",
         CHECKPOINTS_DIR / "vecnormalize_final_stage2.pkl",
         CHECKPOINTS_DIR / "vecnormalize_final_stage1.pkl",
         CHECKPOINTS_DIR / "vecnormalize_final_stage0.pkl",
+        # Per-stage final checkpoints (saved on stage completion)
+        CHECKPOINTS_DIR / "vecnormalize_final_static_far.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_static_mid_far.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_static_medium.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_static_close.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_moving_slow.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_wind.pkl",
+        CHECKPOINTS_DIR / "vecnormalize_final_full_dynamic.pkl",
         # Best checkpoints per stage
         CHECKPOINTS_DIR / "vecnormalize_static_far_best.pkl",
         CHECKPOINTS_DIR / "vecnormalize_static_medium_best.pkl",

@@ -202,7 +202,10 @@ def sync_checkpoint(stage_name: str, notifier: EmailNotifier, push_fail_count: l
     cloud_stage_dir.mkdir(parents=True, exist_ok=True)
 
     synced = []
-    for pattern in [f"{stage_name}_best.zip", f"vecnormalize_{stage_name}_best.pkl"]:
+    for pattern in [
+        f"{stage_name}_best.zip", f"vecnormalize_{stage_name}_best.pkl",
+        f"final_{stage_name}.zip", f"vecnormalize_final_{stage_name}.pkl",
+    ]:
         src = CHECKPOINT_DIR / pattern
         if src.exists():
             dest = cloud_stage_dir / pattern
