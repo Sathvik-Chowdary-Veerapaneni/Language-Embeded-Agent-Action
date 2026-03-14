@@ -1288,9 +1288,10 @@ class ArcheryScene {
         return group;
     }
 
-    fireArrow(trajectoryPoints, onComplete, fromAimMode) {
+    fireArrow(trajectoryPoints, onComplete, fromAimMode, hitData) {
         if (this.animatingArrow) return;
         this.animatingArrow = true;
+        this._lastHitData = hitData || null; // { hit, hit_point }
 
         if (fromAimMode) {
             // Activate cinematic arrow-follow camera
@@ -1340,6 +1341,7 @@ class ArcheryScene {
 
     _launchArrowMesh(trajectoryPoints, onComplete) {
         if (this.arrowMesh) this.scene.remove(this.arrowMesh);
+        if (this._stuckArrow) { this.scene.remove(this._stuckArrow); this._stuckArrow = null; }
         if (this.trailLine) this.scene.remove(this.trailLine);
         if (this._trailGlow) this.scene.remove(this._trailGlow);
         this._trailGlow = null;
@@ -1506,6 +1508,24 @@ class ArcheryScene {
                 requestAnimationFrame(animateStep);
             } else {
                 this._spawnImpactParticles(pt);
+
+                // Keep arrow stuck at final position (embedded in target on hit)
+                if (this._lastHitData && this._lastHitData.hit) {
+                    // Arrow stays — push slightly into the target for embedded look
+                    const stickDir = flightDir || new THREE.Vector3(1, 0, 0);
+                    this.arrowMesh.position.set(pt[0], pt[1], pt[2]);
+                    // Nudge arrow forward into the target surface
+                    this.arrowMesh.position.add(stickDir.clone().multiplyScalar(0.15));
+                    this._stuckArrow = this.arrowMesh;
+                    this.arrowMesh = null; // prevent cleanup on next fire
+                    // Remove stuck arrow after camera returns to default
+                    setTimeout(() => {
+                        if (this._stuckArrow) {
+                            this.scene.remove(this._stuckArrow);
+                            this._stuckArrow = null;
+                        }
+                    }, 4000);
+                }
 
                 // Start impact hold if arrow cam is active
                 if (this._arrowCamActive) {

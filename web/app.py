@@ -248,8 +248,31 @@ def fire():
             closest_dist = obj_dist
             closest_target = obj
 
+    # If hit, truncate trajectory at the impact point
+    if hit and hit_pos is not None:
+        truncated = []
+        for pos, vel in traj:
+            truncated.append((pos, vel))
+            if np.linalg.norm(pos - hit_pos) < 0.05:
+                break
+        # If we didn't find the exact point, find closest
+        if len(truncated) == len(traj):
+            best_idx = 0
+            best_d = float("inf")
+            for i, (pos, _) in enumerate(traj):
+                d = np.linalg.norm(pos - hit_pos)
+                if d < best_d:
+                    best_d = d
+                    best_idx = i
+            truncated = traj[:best_idx + 1]
+        # Append exact hit point as final position
+        truncated.append((hit_pos.copy(), np.zeros(3)))
+        traj_for_frontend = truncated
+    else:
+        traj_for_frontend = traj
+
     # Sample trajectory for frontend
-    sampled = _sample_trajectory(traj, max_points=120)
+    sampled = _sample_trajectory(traj_for_frontend, max_points=120)
     trajectory_points = [_physics_to_threejs(pos) for pos, _ in sampled]
 
     if hit:
@@ -264,6 +287,7 @@ def fire():
     return jsonify({
         "target_id": resp_target.id,
         "hit": hit,
+        "hit_point": _physics_to_threejs(hit_pos) if hit_pos is not None else None,
         "trajectory_points": trajectory_points,
         "target_position": _physics_to_threejs(resp_target.position),
         "result_text": result_text,

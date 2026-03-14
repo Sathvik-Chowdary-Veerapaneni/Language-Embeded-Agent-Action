@@ -155,7 +155,7 @@
                     updateStats();
                     showBanner(data.result_text, data.hit);
                     firing = false;
-                }, true);
+                }, true, { hit: data.hit, hit_point: data.hit_point });
             })
             .catch(err => {
                 console.error('Fire error:', err);
@@ -203,7 +203,7 @@
                     showBanner(data.result_text, data.hit);
                     firing = false;
                     if (fireBtn) fireBtn.disabled = false;
-                }, false);
+                }, false, { hit: data.hit, hit_point: data.hit_point });
             })
             .catch(err => {
                 console.error('Fire error:', err);
