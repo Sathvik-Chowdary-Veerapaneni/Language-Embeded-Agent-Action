@@ -603,6 +603,7 @@ class ArcheryScene {
             object.scale.set(0.012, 0.012, 0.012);
             object.position.set(0, 0, 0);
             object.rotation.y = Math.PI * 0.47;   // face straight towards targets
+            this._archerBaseYaw = object.rotation.y; // store rest yaw for aim offset
 
             // Cast shadows
             object.traverse((child) => {
@@ -678,6 +679,18 @@ class ArcheryScene {
             this._attachBowToHand();
         } else {
             console.warn('Could not find hand bone in skeleton');
+        }
+
+        // Find spine bone for upper-body pitch during aiming
+        this._spineBone = null;
+        skeleton.traverse((child) => {
+            if (child.isBone && child.name.toLowerCase().includes('spine') && !this._spineBone) {
+                this._spineBone = child;
+            }
+        });
+        if (this._spineBone) {
+            console.log('Found spine bone:', this._spineBone.name);
+            this._spineRestQuaternion = this._spineBone.quaternion.clone();
         }
     }
 
@@ -1751,6 +1764,27 @@ class ArcheryScene {
             // Narrow FOV for scope feel
             this.camera.fov = 45 - 15 * t;
             this.camera.updateProjectionMatrix();
+        }
+
+        // Rotate archer (bow + body) to follow aim direction
+        if (this.archerGroup && this._archerBaseYaw !== undefined) {
+            const aimYawNow = this._aimYaw || 0;
+            const aimPitchNow = this._aimPitch || 0;
+
+            // Target yaw: base orientation + aim offset (inverted because Three.js Y-rotation is CCW)
+            const targetYaw = this._archerBaseYaw - aimYawNow;
+            // Smoothly lerp the archer's Y rotation towards target
+            this.archerGroup.rotation.y += (targetYaw - this.archerGroup.rotation.y) * Math.min(1, dt * 12);
+
+            // Upper-body pitch via spine bone
+            if (this._spineBone && this._spineRestQuaternion) {
+                const targetPitch = aimPitchNow * 1.5; // amplify slightly for visibility
+                const pitchQuat = new THREE.Quaternion().setFromEuler(
+                    new THREE.Euler(targetPitch, 0, 0)
+                );
+                const goalQuat = this._spineRestQuaternion.clone().multiply(pitchQuat);
+                this._spineBone.quaternion.slerp(goalQuat, Math.min(1, dt * 12));
+            }
         }
 
         // Update aim power while holding
