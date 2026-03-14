@@ -28,4 +28,9 @@ env/
 .DS_Store
 Thumbs.db
 
-
+# Training — only cloud_checkpoints/ gets pushed (best + final models)
+# Raw step checkpoints stay local to avoid bloating the repo
+rl_training/checkpoints/*_step_*.zip
+rl_training/checkpoints/vecnormalize_*_step_*.pkl
+rl_training/logs/
+*.log

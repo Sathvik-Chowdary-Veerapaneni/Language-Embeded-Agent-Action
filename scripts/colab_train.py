@@ -1,35 +1,38 @@
 """
-LEAA Colab Training Session Script
-===================================
-Handles one training stage in a Colab session:
-  - Restores checkpoint from cloud_checkpoints/<stage>/
-  - Validates checkpoint integrity before loading
-  - Runs training (locked to that stage via --max-stage)
-  - Syncs best checkpoint to cloud_checkpoints/<stage>/ every 30 min
-  - Pushes to GitHub on each sync; emails alert after 3 consecutive failures
-  - Runtime watchdog: emails 1h warning, gracefully stops training 1h before limit
-  - Emails on: training start, runtime warning, training end
+LEAA Training Session Script
+=============================
+Runs training with aggressive checkpoint syncing to survive VM disconnects.
 
-Usage (in Colab):
-    python scripts/colab_train.py --stage 3 --timesteps 15000000 --num-envs 4
+Everything is backed up to git every sync cycle:
+  - All checkpoints (.zip) and VecNormalize stats (.pkl)
+  - TensorBoard logs
+  - Training logs
 
-    # With email notifications (recommended):
-    python scripts/colab_train.py --stage 3 --timesteps 15000000 --num-envs 4 \\
-        --gmail you@gmail.com --gmail-password <app_password>
+Usage (VM — set env vars once, then just run):
+    export LEAA_GMAIL="you@gmail.com"
+    export LEAA_GMAIL_PASSWORD="your-app-password"
+
+    python scripts/colab_train.py --stage 4 --timesteps 40000000 --num-envs 50 \
+        --auto-advance --success-threshold 0.9 --device cpu --sync-interval 300
+
+Usage (Colab):
+    python scripts/colab_train.py --stage 4 --timesteps 15000000 --num-envs 4 \
+        --max-runtime-hours 11
 
 Stage map:
-    3 = static_far
-    4 = moving_slow
-    5 = wind
-    6 = full_dynamic
+    0 = static_close    3 = static_far      5 = wind
+    1 = static_medium   4 = moving_slow     6 = full_dynamic
+    2 = static_mid_far
 """
 
 import argparse
+import glob as globmod
 import os
 import shutil
 import signal
 import smtplib
 import subprocess
+import sys
 import threading
 import time
 import zipfile
@@ -39,8 +42,12 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKPOINT_DIR = REPO_ROOT / "rl_training" / "checkpoints"
 CLOUD_DIR = REPO_ROOT / "cloud_checkpoints"
+LOGS_DIR = REPO_ROOT / "rl_training" / "logs"
 
 STAGE_NAMES = {
+    0: "static_close",
+    1: "static_medium",
+    2: "static_mid_far",
     3: "static_far",
     4: "moving_slow",
     5: "wind",
@@ -51,16 +58,26 @@ STAGE_NAMES = {
 # ─── Email ────────────────────────────────────────────────────────────────────
 
 class EmailNotifier:
-    """Send Gmail notifications via SMTP App Password."""
+    """Send Gmail notifications via SMTP App Password.
+
+    Credentials are resolved in order:
+      1. Explicit arguments (--gmail / --gmail-password)
+      2. Environment variables (LEAA_GMAIL / LEAA_GMAIL_PASSWORD)
+
+    To set up once on the VM:
+        export LEAA_GMAIL="you@gmail.com"
+        export LEAA_GMAIL_PASSWORD="your-app-password"
+    """
 
     def __init__(self, gmail_address: str = None, app_password: str = None):
-        self.address = gmail_address
-        self.password = app_password
-        self.enabled = bool(gmail_address and app_password)
+        self.address = gmail_address or os.environ.get("LEAA_GMAIL")
+        self.password = app_password or os.environ.get("LEAA_GMAIL_PASSWORD")
+        self.enabled = bool(self.address and self.password)
         if self.enabled:
-            print(f"✓ Email notifications enabled → {gmail_address}")
+            source = "args" if gmail_address else "env"
+            print(f"✓ Email notifications enabled → {self.address} (from {source})")
         else:
-            print("⚠ Email notifications disabled (no credentials provided)")
+            print("⚠ Email notifications disabled (set LEAA_GMAIL + LEAA_GMAIL_PASSWORD env vars, or pass --gmail)")
 
     def send(self, subject: str, body: str) -> bool:
         if not self.enabled:
@@ -87,13 +104,13 @@ class RuntimeWatchdog:
     """
     Monitors elapsed session time.
     - Sends a warning email at (limit - 1h - 5min)
-    - Sends SIGINT to the training process at (limit - 1h) for graceful stop + checkpoint save
+    - Sends SIGINT to the training process at (limit - 1h) for graceful stop
     """
 
     def __init__(self, max_runtime_hours: float, notifier: EmailNotifier, stage_name: str):
         self.max_seconds = max_runtime_hours * 3600
-        self.buffer_seconds = 3600          # 1h buffer before hard limit
-        self.warning_lead = 300             # warn 5 min before buffer kicks in
+        self.buffer_seconds = 3600
+        self.warning_lead = 300
         self.notifier = notifier
         self.stage_name = stage_name
         self.start_time = time.time()
@@ -123,23 +140,17 @@ class RuntimeWatchdog:
             elapsed = time.time() - self.start_time
             remaining = self.max_seconds - elapsed
 
-            # Warning: 5 min before the 1h buffer kicks in
             if not self._warned and remaining <= (self.buffer_seconds + self.warning_lead):
                 self._warned = True
                 print(f"\n⚠ Runtime warning: ~1h until graceful stop "
                       f"(elapsed {self._fmt(elapsed)}, remaining {self._fmt(remaining)})")
                 self.notifier.send(
                     f"Runtime warning — {self.stage_name} (~1h left)",
-                    f"Colab session is approaching its time limit.\n\n"
-                    f"Stage:    {self.stage_name}\n"
-                    f"Elapsed:  {self._fmt(elapsed)}\n"
-                    f"Remaining until stop: ~{self._fmt(remaining)}\n\n"
-                    f"Training will be stopped gracefully in ~1 hour and the\n"
-                    f"latest checkpoint will be synced to GitHub.\n\n"
-                    f"Re-open the notebook to resume from where it left off."
+                    f"Session approaching time limit.\n"
+                    f"Elapsed: {self._fmt(elapsed)}, Remaining: ~{self._fmt(remaining)}\n"
+                    f"Training will stop gracefully in ~1 hour."
                 )
 
-            # Stop: 1h before hard limit
             if not self._stopped and remaining <= self.buffer_seconds:
                 self._stopped = True
                 print(f"\n🛑 Runtime watchdog: stopping training "
@@ -180,9 +191,7 @@ def restore_checkpoint(stage_name: str, notifier: EmailNotifier):
                 notifier.send(
                     f"Corrupt checkpoint skipped — {stage_name}",
                     f"Checkpoint {f.name} failed integrity check and was skipped.\n"
-                    f"Training will start fresh for stage {stage_name}.\n\n"
-                    f"You may want to delete the corrupt file from cloud_checkpoints/{stage_name}/ "
-                    f"and retrain from the previous stage."
+                    f"Training will start fresh for stage {stage_name}."
                 )
                 continue
             shutil.copy2(f, CHECKPOINT_DIR / f.name)
@@ -196,66 +205,114 @@ def restore_checkpoint(stage_name: str, notifier: EmailNotifier):
         print(f"⚠ Skipped corrupt files: {skipped}")
 
 
-def sync_checkpoint(stage_name: str, notifier: EmailNotifier, push_fail_count: list):
-    """Copy best checkpoint → cloud_checkpoints/<stage>/ and push to GitHub."""
-    cloud_stage_dir = CLOUD_DIR / stage_name
-    cloud_stage_dir.mkdir(parents=True, exist_ok=True)
+# ─── Aggressive Sync ─────────────────────────────────────────────────────────
 
-    synced = []
-    for pattern in [
-        f"{stage_name}_best.zip", f"vecnormalize_{stage_name}_best.pkl",
-        f"final_{stage_name}.zip", f"vecnormalize_final_{stage_name}.pkl",
-    ]:
-        src = CHECKPOINT_DIR / pattern
-        if src.exists():
-            dest = cloud_stage_dir / pattern
-            if not dest.exists() or src.stat().st_mtime > dest.stat().st_mtime:
-                shutil.copy2(src, dest)
-                synced.append(pattern)
+def full_sync(start_stage: int, notifier: EmailNotifier, push_fail_count: list):
+    """Sync EVERYTHING to git: all checkpoints, logs, training data.
 
-    if not synced:
-        print(f"  No new checkpoint to sync for {stage_name}")
+    This is the nuclear option — if VM dies right after a sync, you lose
+    at most one sync interval worth of training.
+    """
+    timestamp = time.strftime("%Y-%m-%d %H:%M")
+
+    # 1. Copy ALL checkpoint files to cloud_checkpoints/<stage>/
+    synced_files = []
+    for stg_idx in range(start_stage, 7):
+        sname = STAGE_NAMES.get(stg_idx)
+        if not sname:
+            continue
+        cloud_stage_dir = CLOUD_DIR / sname
+        cloud_stage_dir.mkdir(parents=True, exist_ok=True)
+
+        # Sync best + final only (step checkpoints stay local, gitignored)
+        for pattern in [
+            f"{sname}_best.zip", f"vecnormalize_{sname}_best.pkl",
+            f"final_{sname}.zip", f"vecnormalize_final_{sname}.pkl",
+        ]:
+            for src in CHECKPOINT_DIR.glob(pattern):
+                dest = cloud_stage_dir / src.name
+                if not dest.exists() or src.stat().st_mtime > dest.stat().st_mtime:
+                    shutil.copy2(src, dest)
+                    synced_files.append(f"{sname}/{src.name}")
+
+    # Also sync final_stage*.zip (numbered naming from train.py final save)
+    for src in CHECKPOINT_DIR.glob("final_stage*.zip"):
+        # Put in the right stage folder based on stage number
+        dest = CLOUD_DIR / src.name
+        if not dest.exists() or src.stat().st_mtime > dest.stat().st_mtime:
+            shutil.copy2(src, dest)
+            synced_files.append(src.name)
+    for src in CHECKPOINT_DIR.glob("vecnormalize_final_stage*.pkl"):
+        dest = CLOUD_DIR / src.name
+        if not dest.exists() or src.stat().st_mtime > dest.stat().st_mtime:
+            shutil.copy2(src, dest)
+            synced_files.append(src.name)
+
+    if synced_files:
+        print(f"  ✓ Synced {len(synced_files)} checkpoint files")
+    else:
+        print(f"  No new checkpoint files to sync")
+
+    # 2. Git add cloud_checkpoints only (step checkpoints + logs are gitignored)
+    subprocess.run(["git", "add", "cloud_checkpoints/"], cwd=REPO_ROOT,
+                   check=False, capture_output=True)
+
+    # 3. Check if there's anything to commit
+    diff = subprocess.run(["git", "diff", "--staged", "--quiet"], cwd=REPO_ROOT)
+    if diff.returncode == 0:
+        print(f"  No changes to commit")
         return
 
-    print(f"✓ Synced: {synced}")
+    # 4. Commit + push
+    commit_msg = f"auto: training sync {timestamp}"
+    subprocess.run(
+        ["git", "commit", "-m", commit_msg],
+        cwd=REPO_ROOT, check=False, capture_output=True,
+    )
 
-    subprocess.run(["git", "add", "cloud_checkpoints/"], cwd=REPO_ROOT, check=False)
-    diff = subprocess.run(["git", "diff", "--staged", "--quiet"], cwd=REPO_ROOT)
-    if diff.returncode != 0:
-        subprocess.run(
-            ["git", "commit", "-m", f"checkpoint: {stage_name} best update"],
-            cwd=REPO_ROOT, check=False,
-        )
-        result = subprocess.run(["git", "push"], cwd=REPO_ROOT, check=False)
-        if result.returncode == 0:
-            print(f"✓ Pushed {stage_name} checkpoint to GitHub")
-            push_fail_count[0] = 0  # reset on success
-        else:
-            push_fail_count[0] += 1
-            print(f"⚠ Git push failed (failure #{push_fail_count[0]}) — retrying next sync")
-            if push_fail_count[0] >= 3:
-                notifier.send(
-                    f"Git push failing — {stage_name} (#{push_fail_count[0]})",
-                    f"GitHub push has failed {push_fail_count[0]} consecutive times.\n\n"
-                    f"Stage: {stage_name}\n\n"
-                    f"Checkpoints are saved on the VM but NOT on GitHub.\n"
-                    f"If the session expires, they will be LOST.\n\n"
-                    f"Possible causes:\n"
-                    f"  - GITHUB_TOKEN expired → update in Colab Secrets\n"
-                    f"  - Network issue on the VM\n"
-                    f"  - Repository permission problem\n\n"
-                    f"Fix the token and re-run Cell 2 to re-embed it in the remote URL."
-                )
+    result = subprocess.run(
+        ["git", "push"],
+        cwd=REPO_ROOT, check=False, capture_output=True,
+    )
+
+    if result.returncode == 0:
+        print(f"  ✓ Pushed to GitHub @ {timestamp}")
+        push_fail_count[0] = 0
+    else:
+        push_fail_count[0] += 1
+        stderr = result.stderr.decode() if result.stderr else ""
+        print(f"  ⚠ Git push failed #{push_fail_count[0]}: {stderr[:200]}")
+
+        # Try pull --rebase then push again
+        if push_fail_count[0] <= 2:
+            print(f"  Attempting pull --rebase + push...")
+            subprocess.run(["git", "pull", "--rebase"], cwd=REPO_ROOT,
+                           check=False, capture_output=True)
+            retry = subprocess.run(["git", "push"], cwd=REPO_ROOT,
+                                   check=False, capture_output=True)
+            if retry.returncode == 0:
+                print(f"  ✓ Push succeeded after rebase")
+                push_fail_count[0] = 0
+                return
+
+        if push_fail_count[0] >= 3:
+            notifier.send(
+                f"Git push failing #{push_fail_count[0]}",
+                f"GitHub push has failed {push_fail_count[0]} consecutive times.\n\n"
+                f"Checkpoints are saved locally but NOT on GitHub.\n"
+                f"If the VM dies, data will be LOST.\n\n"
+                f"Check: GITHUB_TOKEN, network, repo permissions."
+            )
 
 
-def background_sync(stage_name: str, notifier: EmailNotifier,
-                    push_fail_count: list, interval: int = 1800):
-    """Sync checkpoint every interval seconds in a background thread."""
+def background_sync(start_stage: int, notifier: EmailNotifier,
+                    push_fail_count: list, interval: int = 300):
+    """Full sync every interval seconds in a background thread."""
     while True:
         time.sleep(interval)
         try:
-            print(f"\n[sync] {stage_name} @ {time.strftime('%H:%M:%S')}")
-            sync_checkpoint(stage_name, notifier, push_fail_count)
+            print(f"\n[sync] full sync @ {time.strftime('%H:%M:%S')}")
+            full_sync(start_stage, notifier, push_fail_count)
         except Exception as e:
             print(f"[sync] Error: {e}")
 
@@ -263,35 +320,49 @@ def background_sync(stage_name: str, notifier: EmailNotifier,
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="LEAA Colab Training Session")
-    parser.add_argument("--stage", type=int, required=True, choices=[3, 4, 5, 6],
-                        help="Stage index (3=static_far, 4=moving_slow, 5=wind, 6=full_dynamic)")
+    parser = argparse.ArgumentParser(description="LEAA Training Session")
+    parser.add_argument("--stage", type=int, required=True, choices=range(7),
+                        help="Stage index (0=static_close .. 4=moving_slow, 5=wind, 6=full_dynamic)")
     parser.add_argument("--timesteps", type=int, default=15_000_000)
     parser.add_argument("--num-envs", type=int, default=4,
-                        help="Parallel environments (default: 4 for Colab 2-vCPU)")
-    parser.add_argument("--sync-interval", type=int, default=1800,
-                        help="Checkpoint sync interval in seconds (default: 1800 = 30min)")
+                        help="Parallel environments (default: 4)")
+    parser.add_argument("--auto-advance", action="store_true",
+                        help="Auto-advance to next stages when success threshold is met")
+    parser.add_argument("--success-threshold", type=float, default=None,
+                        help="Override success threshold for all stages (e.g. 0.9 for 90%%)")
+    parser.add_argument("--sync-interval", type=int, default=300,
+                        help="Full backup sync interval in seconds (default: 300 = 5min)")
     parser.add_argument("--gmail", type=str, default=None,
                         help="Gmail address for notifications")
     parser.add_argument("--gmail-password", type=str, default=None,
                         help="Gmail App Password (not your login password)")
-    parser.add_argument("--max-runtime-hours", type=float, default=11.0,
-                        help="Session runtime limit in hours — watchdog stops training 1h before this "
-                             "(default: 11h, leaving 1h buffer in a 12h Colab Pro session)")
+    parser.add_argument("--device", type=str, default="cpu", choices=["cpu", "cuda", "mps"],
+                        help="Training device (default: cpu)")
+    parser.add_argument("--max-runtime-hours", type=float, default=0,
+                        help="Session runtime limit in hours (0 = no limit)")
     args = parser.parse_args()
 
     stage_name = STAGE_NAMES[args.stage]
+    mode = "auto-advance (→ stage 6)" if args.auto_advance else "single stage only"
 
-    print(f"\n{'='*55}")
-    print(f"  LEAA Colab Training: {stage_name} (stage {args.stage})")
+    print(f"\n{'='*60}")
+    print(f"  LEAA Training Session")
+    print(f"  Stage:          {stage_name} (stage {args.stage})")
     print(f"  Timesteps:      {args.timesteps:,}")
     print(f"  Envs:           {args.num_envs}")
-    print(f"  Sync interval:  {args.sync_interval // 60} min")
-    print(f"  Max runtime:    {args.max_runtime_hours}h  (stops 1h before = at {args.max_runtime_hours - 1}h)")
-    print(f"{'='*55}\n")
+    print(f"  Device:         {args.device}")
+    print(f"  Mode:           {mode}")
+    if args.success_threshold:
+        print(f"  Threshold:      {args.success_threshold:.0%}")
+    print(f"  Sync interval:  {args.sync_interval}s ({args.sync_interval // 60}min)")
+    if args.max_runtime_hours > 0:
+        print(f"  Max runtime:    {args.max_runtime_hours}h")
+    else:
+        print(f"  Max runtime:    unlimited")
+    print(f"{'='*60}\n")
 
     notifier = EmailNotifier(args.gmail, args.gmail_password)
-    push_fail_count = [0]  # list so background thread can mutate it
+    push_fail_count = [0]
 
     # ── Restore checkpoint ──────────────────────────────────────────────────
     restore_checkpoint(stage_name, notifier)
@@ -301,43 +372,82 @@ def main():
         print(f"⚠ No resume checkpoint found — starting fresh for {stage_name}")
         resume_path = None
 
-    # ── Background sync thread ──────────────────────────────────────────────
+    # ── Background sync thread (aggressive: every 5 min by default) ──────
     sync_thread = threading.Thread(
         target=background_sync,
-        args=(stage_name, notifier, push_fail_count, args.sync_interval),
+        args=(args.stage, notifier, push_fail_count, args.sync_interval),
         daemon=True,
     )
     sync_thread.start()
-    print(f"✓ Background sync started (every {args.sync_interval // 60} min)")
+    print(f"✓ Background sync started (every {args.sync_interval}s)")
+    print(f"  Syncs: checkpoints + logs + training data → git push")
 
     # ── Runtime watchdog ────────────────────────────────────────────────────
-    watchdog = RuntimeWatchdog(args.max_runtime_hours, notifier, stage_name)
-    watchdog.start()
-    print(f"✓ Runtime watchdog started "
-          f"(warning at {args.max_runtime_hours - 1:.0f}h, hard stop at {args.max_runtime_hours - 1:.0f}h elapsed)\n")
+    watchdog = None
+    if args.max_runtime_hours > 0:
+        watchdog = RuntimeWatchdog(args.max_runtime_hours, notifier, stage_name)
+        watchdog.start()
+        print(f"✓ Runtime watchdog started "
+              f"(stops at {args.max_runtime_hours - 1:.0f}h elapsed)\n")
+    else:
+        print("✓ No runtime limit\n")
+
+    # ── Signal handler for sudden death ──────────────────────────────────
+    # If VM is shutting down, catch SIGTERM and do one last sync
+    _training_proc = [None]  # mutable ref for signal handler
+
+    def emergency_sync(signum, frame):
+        sig_name = signal.Signals(signum).name
+        print(f"\n🚨 {sig_name} received — emergency sync starting...")
+        notifier.send(
+            f"Emergency shutdown — {sig_name}",
+            f"VM sent {sig_name}. Running emergency checkpoint sync before exit."
+        )
+        # Kill training process so it saves checkpoint
+        proc = _training_proc[0]
+        if proc and proc.poll() is None:
+            proc.send_signal(signal.SIGINT)
+            try:
+                proc.wait(timeout=60)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+        # Final sync
+        try:
+            full_sync(args.stage, notifier, push_fail_count)
+            print("✓ Emergency sync complete")
+        except Exception as e:
+            print(f"⚠ Emergency sync failed: {e}")
+        sys.exit(1)
+
+    signal.signal(signal.SIGTERM, emergency_sync)
+    signal.signal(signal.SIGHUP, emergency_sync)
 
     # ── Email: training started ─────────────────────────────────────────────
     notifier.send(
         f"Training started — Stage {args.stage}: {stage_name}",
-        f"A new training session has started on Colab.\n\n"
-        f"Stage:          {stage_name} (stage {args.stage})\n"
-        f"Timesteps:      {args.timesteps:,}\n"
-        f"Parallel envs:  {args.num_envs}\n"
-        f"Checkpoint sync: every {args.sync_interval // 60} min → GitHub\n"
-        f"Max runtime:    {args.max_runtime_hours}h "
-        f"(graceful stop at {args.max_runtime_hours - 1:.0f}h)\n\n"
-        f"{'Resuming from last checkpoint.' if resume_path else 'Starting fresh (no prior checkpoint).'}"
+        f"Training session started.\n\n"
+        f"Stage:      {stage_name} (stage {args.stage})\n"
+        f"Mode:       {mode}\n"
+        f"Timesteps:  {args.timesteps:,}\n"
+        f"Envs:       {args.num_envs}\n"
+        f"Device:     {args.device}\n"
+        f"Sync:       every {args.sync_interval}s → GitHub\n"
+        f"Runtime:    {'unlimited' if args.max_runtime_hours == 0 else f'{args.max_runtime_hours}h'}\n\n"
+        f"{'Resuming from ' + resume_path.name if resume_path else 'Starting fresh.'}"
     )
 
     # ── Build training command ──────────────────────────────────────────────
     cmd = [
         "python", "rl_training/train.py",
-        "--device", "cuda",
+        "--device", args.device,
         "--num-envs", str(args.num_envs),
         "--timesteps", str(args.timesteps),
         "--start-stage", str(args.stage),
-        "--max-stage", str(args.stage),
     ]
+    if not args.auto_advance:
+        cmd += ["--max-stage", str(args.stage)]
+    if args.success_threshold:
+        cmd += ["--success-threshold", str(args.success_threshold)]
     if resume_path:
         cmd += ["--resume", str(resume_path)]
         print(f"▶ Resuming from: {resume_path.name}")
@@ -346,35 +456,39 @@ def main():
 
     print(f"▶ Command: {' '.join(cmd)}\n")
 
-    # ── Run training via Popen so watchdog can stop it ──────────────────────
+    # ── Run training ────────────────────────────────────────────────────────
     proc = subprocess.Popen(cmd, cwd=REPO_ROOT)
-    watchdog.register_process(proc)
+    _training_proc[0] = proc
+    if watchdog:
+        watchdog.register_process(proc)
 
     try:
         proc.wait()
     except KeyboardInterrupt:
-        print("\n[main] Interrupted — waiting for training process to finish saving...")
+        print("\n[main] Interrupted — saving checkpoint...")
         try:
+            proc.send_signal(signal.SIGINT)
             proc.wait(timeout=120)
         except subprocess.TimeoutExpired:
             proc.kill()
 
-    watchdog.stop()
+    if watchdog:
+        watchdog.stop()
 
-    # ── Final sync ──────────────────────────────────────────────────────────
-    print(f"\n{'='*55}")
-    print(f"  Training ended — running final checkpoint sync...")
-    print(f"{'='*55}")
-    sync_checkpoint(stage_name, notifier, push_fail_count)
+    # ── Final sync (guaranteed) ──────────────────────────────────────────────
+    print(f"\n{'='*60}")
+    print(f"  Training ended — running FINAL full sync...")
+    print(f"{'='*60}")
+    full_sync(args.stage, notifier, push_fail_count)
 
     # ── Email: session ended ────────────────────────────────────────────────
-    stopped_by_watchdog = watchdog._stopped
+    stopped_by_watchdog = watchdog._stopped if watchdog else False
     notifier.send(
         f"{'Session ended (runtime limit)' if stopped_by_watchdog else 'Training complete'} — {stage_name}",
-        f"Stage {args.stage} ({stage_name}) training session has ended.\n\n"
-        f"{'⏱ Stopped by runtime watchdog (1h buffer).' if stopped_by_watchdog else '✓ Completed normally.'}\n\n"
-        f"Latest checkpoint synced to GitHub.\n\n"
-        f"{'→ Re-open the notebook and run all cells to resume.' if stopped_by_watchdog else '→ You can now start the next stage.'}"
+        f"Stage {args.stage} ({stage_name}) training has ended.\n\n"
+        f"Mode: {mode}\n"
+        f"{'⏱ Stopped by runtime watchdog.' if stopped_by_watchdog else '✓ Completed normally.'}\n\n"
+        f"All checkpoints + logs synced to GitHub."
     )
 
     print("\n✓ Done. Session complete.")

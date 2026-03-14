@@ -110,12 +110,14 @@ class CurriculumCallback(BaseCallback):
         checkpoint_dir: Path,
         num_envs: int = 1,
         window_size: int = 1000,
-        checkpoint_freq: int = 50000,
+        checkpoint_freq: int = 10000,
         max_stage: int = None,
+        success_threshold_override: float = None,
         verbose: int = 1,
     ):
         super().__init__(verbose)
         self.max_stage = max_stage if max_stage is not None else len(stages) - 1
+        self.success_threshold_override = success_threshold_override
         self.stages = stages
         self.current_stage = current_stage
         self.checkpoint_dir = checkpoint_dir
@@ -169,7 +171,7 @@ class CurriculumCallback(BaseCallback):
 
         # Stage advancement check — signal to outer loop (don't swap env here)
         stage_cfg = self.current_stage_config
-        threshold = stage_cfg.get("success_threshold", 0.9)
+        threshold = self.success_threshold_override or stage_cfg.get("success_threshold", 0.9)
         min_eps = stage_cfg.get("min_episodes", 50000)
 
         if (
@@ -192,6 +194,29 @@ class CurriculumCallback(BaseCallback):
         self.training_env.save(str(vecnorm_path))
         if self.verbose:
             console.print(f"  💾 Checkpoint saved: {path.name} (success: {self.success_rate:.1%})")
+        # Cleanup: keep only latest 5 step checkpoints per stage
+        self._cleanup_old_checkpoints(stage_name, keep=5)
+
+    def _cleanup_old_checkpoints(self, stage_name: str, keep: int = 5) -> None:
+        """Delete old step checkpoints, keeping only the latest N per stage."""
+        import re
+        pattern = re.compile(rf"^{re.escape(stage_name)}_step_(\d+)\.zip$")
+        step_files = []
+        for f in self.checkpoint_dir.iterdir():
+            m = pattern.match(f.name)
+            if m:
+                step_files.append((int(m.group(1)), f))
+
+        if len(step_files) <= keep:
+            return
+
+        # Sort by step number, delete oldest
+        step_files.sort(key=lambda x: x[0])
+        to_delete = step_files[:-keep]
+        for step_num, zip_path in to_delete:
+            zip_path.unlink(missing_ok=True)
+            pkl_path = self.checkpoint_dir / f"vecnormalize_{stage_name}_step_{step_num}.pkl"
+            pkl_path.unlink(missing_ok=True)
 
     def _save_best(self) -> None:
         stage_name = self.current_stage_config["name"]
@@ -337,6 +362,7 @@ def train(
     num_envs: int = 8,
     quick_test: bool = False,
     max_stage: int = None,      # --max-stage: prevent advancing past this stage index
+    success_threshold: float = None,  # override per-stage threshold (e.g. 0.9 for all stages)
 ):
     """Main training loop with curriculum progression and vectorized envs."""
 
@@ -504,13 +530,17 @@ def train(
     stage_budget_idx = 0
 
     # ---------- Callbacks ----------
+    if success_threshold:
+        console.print(f"  [bold]Success threshold override: {success_threshold:.0%} for all stages[/bold]")
+
     curriculum_cb = CurriculumCallback(
         stages=stages,
         current_stage=effective_start_stage,
         checkpoint_dir=CHECKPOINTS_DIR,
         num_envs=num_envs,
-        checkpoint_freq=50000 if not quick_test else 1024,
+        checkpoint_freq=10000 if not quick_test else 1024,
         max_stage=max_stage,
+        success_threshold_override=success_threshold,
     )
 
     # Entropy schedule: conservative for fine-tune (policy already has structure)
@@ -670,6 +700,9 @@ def main():
     parser.add_argument("--max-stage", type=int, default=None,
                         dest="max_stage",
                         help="Max stage index to train — prevents advancing past this stage")
+    parser.add_argument("--success-threshold", type=float, default=None,
+                        dest="success_threshold",
+                        help="Override success threshold for all stages (e.g. 0.9 for 90%%)")
     args = parser.parse_args()
 
     # Print parsed values immediately — before anything else
@@ -693,6 +726,7 @@ def main():
         num_envs=args.num_envs,
         quick_test=args.quick_test,
         max_stage=args.max_stage,
+        success_threshold=args.success_threshold,
     )
 
 
