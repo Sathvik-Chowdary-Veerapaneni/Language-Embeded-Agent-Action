@@ -464,16 +464,16 @@ def train(
         if is_fine_tune:
             # SB3 uses lr_schedule / clip_range_schedule internally — setting learning_rate/clip_range
             # attributes does NOT affect PPO.train() which calls self.lr_schedule(progress).
-            model.lr_schedule = lambda _: 1e-5          # fixes the internal schedule PPO.train() reads
+            model.lr_schedule = lambda _: 5e-5          # fixes the internal schedule PPO.train() reads
             model.batch_size = 256                      # Smaller = gentler updates
             model.n_epochs = 5                          # More epochs now that LR is safe
             model.ent_coef = 0.03                       # Start lower — policy already has structure
             model.clip_range_schedule = lambda _: 0.15  # fixes the internal schedule PPO.train() reads
             # Sync optimizer LR immediately (lr_schedule handles future updates in PPO.train())
             for param_group in model.policy.optimizer.param_groups:
-                param_group['lr'] = 1e-5
+                param_group['lr'] = 5e-5
             console.print(f"  [bold]Fine-tuning hyperparams (resume mode):[/bold]")
-            console.print(f"    lr_schedule=1e-5 (fixed), batch_size=256, n_epochs=5, ent_coef=0.03, clip_range_schedule=0.15")
+            console.print(f"    lr_schedule=5e-5 (fixed), batch_size=256, n_epochs=5, ent_coef=0.03, clip_range_schedule=0.15")
 
     else:
         env = VecNormalize(base_vec_env, norm_obs=True, norm_reward=True,
@@ -612,9 +612,9 @@ def train(
             # Re-assert lr_schedule + optimizer LR at each stage start (clean slate after stage transitions).
             # lr_schedule is what PPO.train() actually reads via update_learning_rate().
             if is_fine_tune:
-                model.lr_schedule = lambda _: 1e-5
+                model.lr_schedule = lambda _: 5e-5
                 for param_group in model.policy.optimizer.param_groups:
-                    param_group['lr'] = 1e-5
+                    param_group['lr'] = 5e-5
 
             model.learn(
                 total_timesteps=stage_budget,
