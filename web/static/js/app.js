@@ -125,7 +125,7 @@
 
         firing = true;
         hideBanner();
-        scene.exitAimMode();
+        scene.exitAimMode(true); // keepCamera — arrow cam will take over seamlessly
 
         const body = {
             wind: getWindParams(),
