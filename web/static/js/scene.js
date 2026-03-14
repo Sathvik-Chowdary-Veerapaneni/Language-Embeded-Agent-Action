@@ -525,19 +525,84 @@ class ArcheryScene {
         };
 
         // --- Archery Training Grounds ---
-        // Place far behind targets as a decorative backdrop, out of camera's direct field
         loadGLB(base + 'Archery Training Grounds.glb', (model, box, size) => {
-            // Scale so it's about 3m tall
-            const targetHeight = 3.0;
-            const s = targetHeight / Math.max(size.y, 0.001);
-            model.scale.set(s, s, s);
-            model.position.set(8, 0, -10);  // behind and to the side
-            model.rotation.y = Math.PI * 0.5;
+            model.scale.set(3.3, 3.3, 3.3);
+            model.position.set(10.5, 0.4, -7.5);
+            model.rotation.set(0, -0.95, 0);
             model.traverse(child => {
                 if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }
             });
             this.scene.add(model);
             this._glbModels['trainingGrounds'] = model;
+
+            // Store bullseye meshes (white rings _4, red rings _5) for raycast hit detection
+            this._bullseyeMeshes = [];
+            model.traverse(child => {
+                if (child.isMesh && (child.name.endsWith('_4') || child.name.endsWith('_5'))) {
+                    this._bullseyeMeshes.push(child);
+                }
+            });
+
+            // Find individual bullseye centers by clustering vertices of the red mesh (_5)
+            // Each bullseye is a separate cluster of red vertices
+            this._bullseyeTargets = [];
+            model.traverse(child => {
+                if (child.isMesh && child.name.endsWith('_5')) {
+                    const posAttr = child.geometry.attributes.position;
+                    const verts = [];
+                    const tempVec = new THREE.Vector3();
+                    for (let i = 0; i < posAttr.count; i++) {
+                        tempVec.set(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i));
+                        child.localToWorld(tempVec.clone());
+                        // Transform through parent hierarchy to get world position
+                        const wp = new THREE.Vector3(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i));
+                        wp.applyMatrix4(child.matrixWorld);
+                        verts.push(wp);
+                    }
+
+                    // Simple clustering: group vertices within 0.8 units of each other
+                    const clusters = [];
+                    const used = new Set();
+                    for (let i = 0; i < verts.length; i++) {
+                        if (used.has(i)) continue;
+                        const cluster = [verts[i]];
+                        used.add(i);
+                        for (let j = i + 1; j < verts.length; j++) {
+                            if (used.has(j)) continue;
+                            if (verts[i].distanceTo(verts[j]) < 1.5) {
+                                cluster.push(verts[j]);
+                                used.add(j);
+                            }
+                        }
+                        if (cluster.length >= 3) { // ignore tiny fragments
+                            const center = new THREE.Vector3();
+                            cluster.forEach(v => center.add(v));
+                            center.divideScalar(cluster.length);
+                            clusters.push({ center, vertCount: cluster.length });
+                        }
+                    }
+
+                    clusters.forEach((c, i) => {
+                        console.log(`Bullseye ${i}: center (${c.center.x.toFixed(2)}, ${c.center.y.toFixed(2)}, ${c.center.z.toFixed(2)}) verts: ${c.vertCount}`);
+                        this._bullseyeTargets.push({
+                            id: `bullseye_${i}`,
+                            position: [c.center.x, c.center.y, c.center.z],
+                            radius: 0.4,
+                        });
+                    });
+
+                    // Register bullseye positions with the backend
+                    if (this._bullseyeTargets.length > 0) {
+                        fetch('/api/register_bullseyes', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ bullseyes: this._bullseyeTargets }),
+                        }).then(r => r.json()).then(d => {
+                            console.log('Registered bullseyes with backend:', d);
+                        }).catch(e => console.warn('Could not register bullseyes:', e));
+                    }
+                }
+            });
         });
 
         // --- Wooden Sign ---
@@ -1296,19 +1361,16 @@ class ArcheryScene {
     _handleAimMouseMove(e) {
         if (!this.isAiming) return;
 
-        if (!this._aimMouseStart) {
-            this._aimMouseStart = { x: e.clientX, y: e.clientY };
-            return;
-        }
-
-        // Mouse delta from aim start position
-        const dx = e.clientX - this._aimMouseStart.x;
-        const dy = e.clientY - this._aimMouseStart.y;
+        // Always measure from screen center so aim range is consistent
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        const dx = e.clientX - cx;
+        const dy = e.clientY - cy;
 
         // Sensitivity: pixels to radians (lower = more precise)
-        const sensitivity = 0.002;
-        const maxYaw = 0.5;    // max ~30 degrees horizontal (forward arc only)
-        const maxPitch = 0.25; // max ~15 degrees vertical
+        const sensitivity = 0.003;
+        const maxYaw = 2.36;    // ~270° total horizontal arc (±135°)
+        const maxPitch = 1.0;   // ~115° total vertical arc (±57°)
 
         this._aimYaw = Math.max(-maxYaw, Math.min(maxYaw, dx * sensitivity));
         this._aimPitch = Math.max(-maxPitch, Math.min(maxPitch, -dy * sensitivity)); // invert Y
@@ -1326,11 +1388,15 @@ class ArcheryScene {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(new THREE.Vector2(0, 0), this.camera);
 
-        // Find what the crosshair is pointing at
+        // Find what the crosshair is pointing at (old targets + bullseyes)
         const meshes = [];
         Object.values(this.targetMeshes).forEach(m => {
             m.traverse(child => { if (child.isMesh) meshes.push(child); });
         });
+        // Include bullseye meshes from training grounds
+        if (this._bullseyeMeshes) {
+            this._bullseyeMeshes.forEach(m => meshes.push(m));
+        }
         const hits = raycaster.intersectObjects(meshes, false);
 
         let aimPoint;
@@ -1872,8 +1938,8 @@ class ArcheryScene {
             // Offset the look-at target based on mouse movement
             // Z offset uses aimYaw to sweep horizontally across the field
             const lookTarget = new THREE.Vector3(tgtX, tgtY, tgtZ);
-            lookTarget.z += aimYaw * 12;          // horizontal sweep (left/right across field)
-            lookTarget.y += aimPitch * 8;          // vertical aim (up/down)
+            lookTarget.z += aimYaw * 30;          // wide horizontal sweep across full field
+            lookTarget.y += aimPitch * 20;         // wide vertical sweep
 
             this.camera.lookAt(lookTarget);
 
