@@ -889,7 +889,9 @@ class ArcheryScene {
         sceneData.objects.forEach(obj => {
             this.targets[obj.id] = obj;
             const group = this._createTargetMesh(obj);
-            group.position.set(obj.position[0], obj.position[1], obj.position[2]);
+            // Bullseye stands are built from ground (y=0) up, so place at ground level
+            const groundY = obj.shape === 'bullseye' ? 0 : obj.position[1];
+            group.position.set(obj.position[0], groundY, obj.position[2]);
             this.scene.add(group);
             this.targetMeshes[obj.id] = group;
 
@@ -909,13 +911,14 @@ class ArcheryScene {
         const shape = obj.shape || 'barrel';
         const severity = obj.severity || 1;
         const builders = {
+            bullseye:  () => this._buildBullseye(obj, severity),
             barrel:    () => this._buildBarrel(obj, severity),
             crate:     () => this._buildCrate(obj, severity),
             scarecrow: () => this._buildScarecrow(obj, severity),
             bottle:    () => this._buildBottle(obj, severity),
             lantern:   () => this._buildLantern(obj, severity),
         };
-        return (builders[shape] || builders.barrel)();
+        return (builders[shape] || builders.bullseye)();
     }
 
     // Severity badge — colored ring on ground showing difficulty
@@ -929,6 +932,82 @@ class ArcheryScene {
         ring.rotation.x = -Math.PI / 2;
         ring.position.y = yBase + 0.02;
         group.add(ring);
+    }
+
+    // --- BULLSEYE (Archery target — concentric rings on stand, facing archer) ---
+    _buildBullseye(obj, severity) {
+        const group = new THREE.Group();
+        const colorMap = {
+            red: 0xcc2222, blue: 0x2244cc, yellow: 0xccaa11,
+            green: 0x22aa33, white: 0xdddddd,
+        };
+        const mainColor = colorMap[obj.flag_color] || 0xcc2222;
+        const postMat = new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 0.9 });
+
+        const boardY = 1.35;  // Center of board above ground
+
+        // Two front legs
+        for (let side = -1; side <= 1; side += 2) {
+            const leg = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.04, 0.05, 2.0, 6), postMat
+            );
+            leg.position.set(0, 1.0, side * 0.4);
+            leg.rotation.z = 0.08;
+            leg.castShadow = true;
+            group.add(leg);
+        }
+
+        // Rear support leg (angled back)
+        const rearLeg = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.035, 0.045, 1.8, 6), postMat
+        );
+        rearLeg.position.set(0.5, 0.8, 0);
+        rearLeg.rotation.z = 0.55;
+        rearLeg.castShadow = true;
+        group.add(rearLeg);
+
+        // Cross brace between front legs
+        const brace = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.025, 0.025, 0.9, 5), postMat
+        );
+        brace.rotation.x = Math.PI / 2;
+        brace.position.set(0, 0.5, 0);
+        group.add(brace);
+
+        // Backboard disc — facing the archer (face perpendicular to X axis)
+        const boardMat = new THREE.MeshStandardMaterial({ color: 0xd4c5a0, roughness: 0.8 });
+        const board = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.7, 0.7, 0.06, 32), boardMat
+        );
+        board.rotation.z = Math.PI / 2;  // face toward -X (archer at origin)
+        board.position.set(0, boardY, 0);
+        board.castShadow = true;
+        board.receiveShadow = true;
+        group.add(board);
+
+        // Concentric colored rings on front face
+        const rings = [
+            { inner: 0.55, outer: 0.68, color: 0xeeeeee },
+            { inner: 0.42, outer: 0.55, color: 0x222222 },
+            { inner: 0.28, outer: 0.42, color: mainColor },
+            { inner: 0.14, outer: 0.28, color: mainColor },
+            { inner: 0.0,  outer: 0.14, color: 0xffd700 },
+        ];
+        rings.forEach((r, i) => {
+            const geo = r.inner > 0
+                ? new THREE.RingGeometry(r.inner, r.outer, 32)
+                : new THREE.CircleGeometry(r.outer, 32);
+            const mat = new THREE.MeshStandardMaterial({
+                color: r.color, side: THREE.DoubleSide, roughness: 0.6
+            });
+            const ring = new THREE.Mesh(geo, mat);
+            ring.rotation.y = Math.PI / 2;  // face toward -X (archer)
+            ring.position.set(-0.035 - i * 0.001, boardY, 0);
+            group.add(ring);
+        });
+
+        this._addSeverityIndicator(group, severity, 0);
+        return group;
     }
 
     // --- BARREL (Severity 1 — easy, close, big) ---
@@ -1404,10 +1483,26 @@ class ArcheryScene {
             // Crosshair is on a target — aim directly at the hit point
             aimPoint = hits[0].point;
         } else {
-            // No target hit — project the camera ray far out to get a distant aim point
-            const camDir = new THREE.Vector3();
-            this.camera.getWorldDirection(camDir);
-            aimPoint = this.camera.position.clone().add(camDir.multiplyScalar(50));
+            // No target mesh hit — intersect with ground plane and all scene objects
+            const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const groundPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(groundPlane, groundPoint);
+
+            // Also try all scene meshes (ground, trees, etc.)
+            const allMeshes = [];
+            this.scene.traverse(child => { if (child.isMesh) allMeshes.push(child); });
+            const sceneHits = raycaster.intersectObjects(allMeshes, false);
+
+            if (sceneHits.length > 0 && sceneHits[0].distance < 200) {
+                aimPoint = sceneHits[0].point;
+            } else if (groundPoint && groundPoint.length() < 200) {
+                aimPoint = groundPoint;
+            } else {
+                // Final fallback — project camera ray far out
+                const camDir = new THREE.Vector3();
+                this.camera.getWorldDirection(camDir);
+                aimPoint = this.camera.position.clone().add(camDir.multiplyScalar(100));
+            }
         }
 
         // Direction from arrow origin to the aim point

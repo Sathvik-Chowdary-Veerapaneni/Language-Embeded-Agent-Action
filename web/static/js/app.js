@@ -182,19 +182,20 @@
     function doFireText() {
         if (firing) return;
         const command = commandInput.value.trim();
-        if (!command) {
-            commandInput.placeholder = 'Enter a command first!';
-            return;
-        }
 
         firing = true;
         if (fireBtn) fireBtn.disabled = true;
         hideBanner();
 
+        // In RL mode: use command for target selection, RL agent for aiming
+        // If no command, RL agent auto-aims at closest target
+        const body = { wind: getWindParams(), mode: 'rl' };
+        if (command) body.command = command;
+
         fetch('/api/fire', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command, wind: getWindParams() }),
+            body: JSON.stringify(body),
         })
             .then(r => r.json())
             .then(data => {
@@ -309,8 +310,23 @@
             modeRlBtn.classList.add('active');
             modeHeuristicBtn.classList.remove('active');
             modeLabel.textContent = 'Trained RL Policy';
-            modeStatus.textContent = 'MODEL NOT LOADED';
-            modeStatus.className = 'mode-status offline';
+
+            // Check RL model status from server
+            fetch('/api/rl_status')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.available) {
+                        modeStatus.textContent = 'ACTIVE';
+                        modeStatus.className = 'mode-status online';
+                    } else {
+                        modeStatus.textContent = 'MODEL NOT LOADED';
+                        modeStatus.className = 'mode-status offline';
+                    }
+                })
+                .catch(() => {
+                    modeStatus.textContent = 'MODEL NOT LOADED';
+                    modeStatus.className = 'mode-status offline';
+                });
 
             // Show text command bar, hide game hint
             commandBar.className = '';
