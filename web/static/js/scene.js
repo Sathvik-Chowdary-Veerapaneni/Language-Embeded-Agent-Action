@@ -1413,20 +1413,27 @@ class ArcheryScene {
         if (!this.isAiming) return;
         this.isAiming = false;
 
-        // If firing, keep camera in aim position — arrow cam will take over seamlessly
-        if (!keepCamera) {
-            this._cameraLerpDir = -1; // zoom back out
-        }
-
         // Stop tracking mouse movement
         if (this._onAimMouseMove) {
             document.removeEventListener('mousemove', this._onAimMouseMove);
             this._onAimMouseMove = null;
         }
 
-        // Reset aim offsets
-        this._aimYaw = 0;
-        this._aimPitch = 0;
+        if (keepCamera) {
+            // Firing — freeze camera state for arrow cam to pick up.
+            // Save pos+target now, keep aim offsets alive until fireArrow takes over.
+            this._savedCamPos = this.camera.position.clone();
+            this._savedCamTarget = new THREE.Vector3();
+            this.camera.getWorldDirection(this._savedCamTarget);
+            this._savedCamTarget.multiplyScalar(10).add(this.camera.position);
+            this._holdingForArrowCam = true;
+            // Do NOT clear aim offsets — fireArrow will do it
+        } else {
+            // Not firing — zoom back out immediately
+            this._cameraLerpDir = -1;
+            this._aimYaw = 0;
+            this._aimPitch = 0;
+        }
 
         // Hide arrow in right hand
         if (this._handArrowModel) this._handArrowModel.visible = false;
@@ -1583,15 +1590,29 @@ class ArcheryScene {
             this._arrowCamHolding = false;
             this._arrowCamReturning = false;
             this._arrowCamReturnLerp = 0;
-            // Keep camera where it is — arrow cam will smoothly take over
-            // by initializing its last pos/target from the current camera state
             this._cameraLerpDir = 0;
-            this._arrowCamLastPos = this.camera.position.clone();
-            this._arrowCamLastTarget = new THREE.Vector3();
-            this.camera.getWorldDirection(this._arrowCamLastTarget);
-            this._arrowCamLastTarget.multiplyScalar(10).add(this.camera.position);
-            // Now reset lerp so aim camera logic stops
+
+            // Use saved camera state from exitAimMode (captured before fetch delay)
+            if (this._holdingForArrowCam && this._savedCamPos) {
+                this._arrowCamLastPos = this._savedCamPos.clone();
+                this._arrowCamLastTarget = this._savedCamTarget.clone();
+                // Restore camera to saved position (in case it drifted during fetch)
+                this.camera.position.copy(this._savedCamPos);
+                this.camera.lookAt(this._savedCamTarget);
+            } else {
+                this._arrowCamLastPos = this.camera.position.clone();
+                this._arrowCamLastTarget = new THREE.Vector3();
+                this.camera.getWorldDirection(this._arrowCamLastTarget);
+                this._arrowCamLastTarget.multiplyScalar(10).add(this.camera.position);
+            }
+
+            // Now safe to clear aim offsets and stop aim camera logic
+            this._aimYaw = 0;
+            this._aimPitch = 0;
             this._cameraLerp = 0;
+            this._holdingForArrowCam = false;
+            this._savedCamPos = null;
+            this._savedCamTarget = null;
 
             // Already in draw pose from aim mode — launch immediately, then return to idle
             this._launchArrowMesh(trajectoryPoints, () => {
@@ -1745,15 +1766,32 @@ class ArcheryScene {
             // Arrow flight direction for orientation
             let flightDir = null;
             if (targetIndex < totalPoints - 1) {
-                const next = trajectoryPoints[Math.min(targetIndex + 1, totalPoints - 1)];
-                flightDir = new THREE.Vector3(
-                    next[0] - pt[0], next[1] - pt[1], next[2] - pt[2]
-                ).normalize();
-                if (flightDir.length() > 0.001) {
+                // Look ahead for a point far enough away to get a reliable direction
+                let next = null;
+                for (let fi = targetIndex + 1; fi < totalPoints; fi++) {
+                    const candidate = trajectoryPoints[fi];
+                    const dx = candidate[0] - pt[0];
+                    const dy = candidate[1] - pt[1];
+                    const dz = candidate[2] - pt[2];
+                    if (dx * dx + dy * dy + dz * dz > 0.001) {
+                        next = candidate;
+                        break;
+                    }
+                }
+                if (next) {
+                    flightDir = new THREE.Vector3(
+                        next[0] - pt[0], next[1] - pt[1], next[2] - pt[2]
+                    ).normalize();
+                }
+                // If no valid next point, use previous direction (keep last known good)
+                if (flightDir && flightDir.length() > 0.001) {
                     const axis = new THREE.Vector3(1, 0, 0);
                     this.arrowMesh.quaternion.copy(
                         new THREE.Quaternion().setFromUnitVectors(axis, flightDir)
                     );
+                    this._lastFlightDir = flightDir.clone();
+                } else if (this._lastFlightDir) {
+                    flightDir = this._lastFlightDir;
                 }
             }
 
@@ -1778,9 +1816,9 @@ class ArcheryScene {
                     .add(new THREE.Vector3(0, heightOffset, 0))
                     .add(right.clone().multiplyScalar(sideOffset));
 
-                // Smooth camera with lerp to avoid jitter
+                // Smooth camera — higher value = more responsive
                 if (this._arrowCamLastPos) {
-                    const smoothing = 0.12;
+                    const smoothing = 0.45; // responsive follow (was 0.12 — too laggy)
                     camPos.lerp(this._arrowCamLastPos, 1.0 - smoothing);
                     camTarget.lerp(this._arrowCamLastTarget, 1.0 - smoothing);
                 }
@@ -1821,7 +1859,12 @@ class ArcheryScene {
                 if (this._arrowCamActive) {
                     this._arrowCamHolding = true;
                     this._arrowCamHoldStart = performance.now();
-                    this._startImpactHold(pt);
+                    this._startImpactHold(pt, () => {
+                        // Camera fully returned — NOW allow re-firing
+                        this.animatingArrow = false;
+                    });
+                } else {
+                    this.animatingArrow = false;
                 }
 
                 // Clean up trail after a short delay
@@ -1839,7 +1882,6 @@ class ArcheryScene {
                         this._trailGlow = null;
                     }
                 }, 800);
-                this.animatingArrow = false;
                 if (onComplete) onComplete();
             }
         };
@@ -1926,11 +1968,11 @@ class ArcheryScene {
     // Cinematic camera — impact hold + return to default
     // -------------------------------------------------------------------
 
-    _startImpactHold(impactPoint) {
+    _startImpactHold(impactPoint, onDone) {
         // Orbit slowly around impact point during hold
         const impactPos = new THREE.Vector3(impactPoint[0], impactPoint[1], impactPoint[2]);
-        const holdDuration = 1200; // ms to hold on impact
-        const returnDuration = 1500; // ms to return to default camera
+        const holdDuration = 600; // ms to hold on impact (snappy)
+        const returnDuration = 800; // ms to return to default camera
 
         const orbitStep = (timestamp) => {
             const elapsed = timestamp - this._arrowCamHoldStart;
@@ -1999,6 +2041,12 @@ class ArcheryScene {
 
         if (this.mixer) {
             this.mixer.update(dt);
+        }
+
+        // Hold camera frozen while waiting for arrow cam to take over
+        if (this._holdingForArrowCam && this._savedCamPos) {
+            this.camera.position.copy(this._savedCamPos);
+            this.camera.lookAt(this._savedCamTarget);
         }
 
         // Camera lerp (transition between default and aim positions)
